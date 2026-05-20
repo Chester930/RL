@@ -1,0 +1,40 @@
+﻿@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap');
+section {
+  font-family: 'Noto Sans TC', 'Microsoft JhengHei', 'PingFang TC', 'Arial', sans-serif;
+  font-size: 22px;
+  padding: 40px 60px;
+}
+section.title {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  color: white;
+  text-align: center;
+  justify-content: center;
+}
+section.title h1 { color: #f0f0f0; font-size: 2em; }
+section.title h2 { color: #a8d8ea; border: none; font-size: 1.2em; }
+section.title p  { color: #ccc; font-size: 0.9em; }
+section.act {
+  background: linear-gradient(135deg, #2c3e50, #34495e);
+  color: white;
+  text-align: center;
+  justify-content: center;
+}
+section.act h1 { color: #f39c12; font-size: 1.8em; }
+section.act h2 { color: #ecf0f1; border: none; font-size: 1.1em; }
+section.act ul  { text-align: left; color: #bdc3c7; }
+h1 { color: #2c3e50; font-size: 1.4em; }
+h2 { color: #27ae60; border-bottom: 2px solid #27ae60; padding-bottom: 4px; margin-bottom: 16px; }
+h3 { color: #2980b9; font-size: 1em; margin-bottom: 8px; }
+pre  { background: #1e1e1e; color: #e8e8e8; font-size: 0.82em; border-radius: 6px; padding: 10px 14px; line-height: 1.55; border-left: 4px solid #0288d1; }
+pre .hljs-comment { color: #b0c4d8 !important; }
+code { background: #eef; padding: 1px 5px; border-radius: 3px; font-size: 0.9em; }
+pre code { background: transparent; padding: 0; }
+table { font-size: 0.85em; width: 100%; }
+th { background: #2c3e50; color: white; }
+td, th { padding: 6px 10px; }
+tr:nth-child(even) { background: #f2f2f2; }
+.red   { color: #e74c3c; font-weight: bold; }
+.green { color: #27ae60; font-weight: bold; }
+.blue  { color: #2980b9; font-weight: bold; }
+footer { font-size: 0.7em; color: #999; }
+

@@ -1,0 +1,19 @@
+# RL 專案依賴
+# 安裝：pip install -r requirements.txt
+# 使用 venv：venv\Scripts\Activate.ps1
+
+# 核心
+gymnasium[toy-text,box2d,mujoco]
+torch
+numpy
+matplotlib
+pygame-ce
+
+# 視覺化
+tensorboard
+
+# 機器人環境（HER 用 FetchReach-v4）
+gymnasium-robotics   # 同時安裝 pettingzoo（MADDPG/MAPPO 可用）
+
+# 注意：d4rl（CQL/IQL 離線資料集）不支援 Python 3.13
+# CQL/IQL 目前使用 HalfCheetah-v4 線上模式跑
