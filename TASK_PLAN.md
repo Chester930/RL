@@ -1,6 +1,6 @@
 # RL 專案任務計畫書
 
-最後更新：2026-05-19（全部核心任務完成）
+最後更新：2026-05-21（新增延伸任務 A/B/C）
 
 ---
 
@@ -106,16 +106,131 @@ npx @marp-team/marp-cli course_slides.md --pdf --output course_slides.pdf --allo
 
 ---
 
-## 已完成演算法總覽（課程就緒）
+## 課程前確認清單 ✅ 全部完成
 
-| 章節 | 演算法 | 結果 | 可用？|
+- [x] 任務一：DDQN/PER/DuelingDQN 有可用結果（best_checkpoints）
+- [x] 任務二：BC 訓練完成，training_log.md 有實際數字
+- [x] 任務三：COURSE_OUTLINE.md 數字已修正
+- [x] 任務四：8 張 PNG 已產出（含 Q-table 爆炸 + BC vs SAC 真實數字）
+- [x] 任務五：course_slides.pdf 投影片就緒
+- [x] 課堂時間預演（目標 100 分鐘，不超時）
+
+---
+
+## 延伸任務 A：07_Modern_RLHF 三支程式執行 ✅ 已完成
+
+**狀態：✅ 已完成（2026-05-22）**
+
+### 實際結果
+
+| 演算法 | 關鍵指標 | checkpoint |
+|---|---|---|
+| RLHF InstructGPT | SFT 損失 20.09→12.24，RM ~0.693，PPO 平均獎勵 ~-17.5 | `checkpoints/rlhf/rlhf_{sft,rm,ppo}.pt` |
+| DPO | 損失 2.1–6.9 震盪，準確率 ~50%（合成隨機基線） | `checkpoints/dpo_step{500,1000}` |
+| GRPO | 損失穩定 ~0.4147，KL≈0，獎勵固定 0.1（合成無信號） | `checkpoints/grpo_step{250,500}` |
+
+### 完成標準
+
+- [x] 三支均執行完畢無錯誤
+- [x] 為每支寫 `training_log.md`
+- [ ] 演算法總覽表更新（本文末）
+
+---
+
+## 延伸任務 B：HER 實作（Hindsight Experience Replay） ✅ 已完成
+
+**狀態：✅ 已完成（2026-05-22）**
+
+### 背景
+
+HER（Andrychowicz et al., 2017）解決**稀疏獎勵**問題：
+把「失敗的軌跡」重新標記目標（achieved_goal → new goal），
+讓 DDPG 在機器手臂環境中學會 FetchReach。
+
+課程延伸價值：從 ICM 的「主動探索」過渡到「重新利用失敗經驗」。
+
+### 環境
+
+```python
+import gymnasium as gym
+import gymnasium_robotics
+gym.register_envs(gymnasium_robotics)
+env = gym.make("FetchReach-v3")  # obs 含 achieved_goal / desired_goal
+```
+
+### 實作要點
+
+- `agent.py`：DDPG + HER replay buffer（goal concatenation 輸入）
+- `train.py`：每集結束後 hindsight relabeling（k=4 個替代目標）
+- 評估指標：success_rate（距目標 ≤ 5cm 視為成功）
+
+### 實際結果
+
+| 指標 | 數值 |
+|---|---|
+| 環境 | FetchReach-v4（obs=10, goal=3, act=4）|
+| 峰值成功率 | **80%**（Epoch 170 & 180）|
+| 收斂狀況 | Epoch 90 起開始學習，130+ 突破 60% |
+
+### 完成標準
+
+- [x] `06_Advanced_Specialized/2017_HER/agent.py`
+- [x] `06_Advanced_Specialized/2017_HER/train.py`
+- [x] `06_Advanced_Specialized/2017_HER/training_log.md`（success_rate 曲線）
+- [ ] 演算法總覽表更新
+
+---
+
+## 延伸任務 C：MADDPG 實作（多智能體） ⬜ 待執行
+
+**狀態：⬜ 待執行**
+**預計時間：~45-60 分鐘（安裝 ~5 min + 實作 ~35 min + 訓練 ~15 min）**
+**前置條件：需安裝 pettingzoo MPE 子包**
+
+### 安裝指令
+
+```powershell
+C:\Users\666\Desktop\RL\venv\Scripts\pip.exe install "pettingzoo[mpe]"
+```
+
+### 背景
+
+MADDPG（Lowe et al., 2017）：每個 agent 有獨立 actor，但 critic 在訓練時
+可看到所有 agents 的觀察與動作（集中式訓練 + 分散式執行，CTDE）。
+
+### 環境與完成標準
+
+- 環境：`simple_spread_v3`（3 個 agent 要分散覆蓋 3 個目標）
+- [ ] `06_Advanced_Specialized/2017_MADDPG_MARL/agent.py`
+- [ ] `06_Advanced_Specialized/2017_MADDPG_MARL/train.py`
+- [ ] `06_Advanced_Specialized/2017_MADDPG_MARL/training_log.md`
+- [ ] 演算法總覽表更新
+
+---
+
+## 任務時間分配（2-3 小時）
+
+```
+[00:00 - 00:30]  任務 A：跑 RLHF / DPO / GRPO（代碼就緒，直接執行）
+[00:30 - 01:45]  任務 B：實作 HER（重點任務，gymnasium-robotics 已裝）
+[01:45 - 02:45]  任務 C：安裝 pettingzoo[mpe] + 實作 MADDPG
+[02:45 - 03:00]  更新演算法總覽表 + git commit
+```
+
+**優先順序：A > B > C**（C 時間不夠可跳過）
+
+---
+
+## 已完成演算法總覽
+
+| 章節 | 演算法 | 結果 | 狀態 |
 |---|---|---|---|
 | 00 | BC | eval=-144.6，分佈偏移測試完整 | ✅ |
 | 01 | Q-Learning | FrozenLake 表格收斂 | ✅ |
 | 02 | DQN | CartPole eval=500 | ✅ |
-| 02 | DDQN | 最佳 eval=500（100K），best checkpoint | ✅ |
-| 02 | PER | 最佳 eval=490（180K），best checkpoint | ✅ |
-| 02 | DuelingDQN | 最佳 eval=500（多次），checkpoint | ✅ |
+| 02 | DDQN | 最佳 eval=500（100K） | ✅ |
+| 02 | PER | 最佳 eval=490（180K） | ✅ |
+| 02 | DuelingDQN | 最佳 eval=500（多次） | ✅ |
 | 03 | REINFORCE | eval=9.5（高方差，符合教學目的）| ✅ |
 | 03 | PPO | CartPole 500 + LunarLander 283.9 | ✅ |
 | 03 | A2C | CartPole 峰值 357.5 | ✅ |
@@ -127,32 +242,8 @@ npx @marp-team/marp-cli course_slides.md --pdf --output course_slides.pdf --allo
 | 05 | MuZero | CartPole ~9（MCTS 展示用）| ✅ |
 | 06 | ICM | MountainCar -145.2（成功登頂）| ✅ |
 | 06 | C51 | CartPole 峰值 372.0 | ✅ |
-
----
-
-## 課程前確認清單
-
-- [x] 任務一：DDQN/PER/DuelingDQN 有可用結果（best_checkpoints）
-- [x] 任務二：BC 訓練完成，training_log.md 有實際數字
-- [x] 任務三：COURSE_OUTLINE.md 數字已修正
-- [x] 任務四：8 張 PNG 已產出（含 Q-table 爆炸 + BC vs SAC 真實數字）
-- [x] 任務五：course_slides.pdf 投影片就緒
-- [ ] 課堂時間預演（目標 100 分鐘，不超時）
-
----
-
-## 任務五（原）：其他章節補完（低優先，非課程必需）
-
-### 可直接跑（無需安裝依賴）
-| 演算法 | 目錄 | 預計時間 |
-|---|---|---|
-| Dreamer | `05_Model_Based/2019_Dreamer/` | 已完成 ✅ |
-| MuZero | `05_Model_Based/2019_MuZero/` | 已完成 ✅ |
-
-### 需安裝依賴（課後延伸，非必需）
-| 演算法 | 需要安裝 | 預計時間 |
-|---|---|---|
-| MBPO | `pip install "gymnasium[mujoco]"` | ~30 分鐘 |
-| HER | `pip install "gymnasium[mujoco]" gymnasium-robotics` | ~20 分鐘 |
-| CQL / IQL | MuJoCo + D4RL 資料集 | ~60 分鐘 |
-| MADDPG / MAPPO | `pip install pettingzoo[mpe]` | ~30 分鐘 |
+| 06 | HER | FetchReach-v4 峰值成功率 80%（Epoch 170）| ✅ |
+| 06 | MADDPG | — | ⬜ 任務 C |
+| 07 | RLHF/InstructGPT | SFT 損失 12.24，PPO 平均獎勵 -17.5 | ✅ |
+| 07 | DPO | 準確率 ~50%（合成基線） | ✅ |
+| 07 | GRPO | 損失 ~0.4147，KL≈0 | ✅ |

@@ -14,6 +14,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
 import numpy as np
 # pyrefly: ignore [missing-import]
 import gymnasium as gym
+import gymnasium_robotics
+gym.register_envs(gymnasium_robotics)
 
 from agent import HERAgent
 from common.utils.logger import Logger

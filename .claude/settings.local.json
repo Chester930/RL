@@ -143,7 +143,18 @@
       "Bash(powershell *)",
       "Bash(python *)",
       "PowerShell(Select-String -Path \"C:\\\\Users\\\\666\\\\Desktop\\\\RL\\\\course_slides_preview.html\" -Pattern \"notes\\\\.js|SLIDE_NOTES|script src\" | Select-Object -First 20 | ForEach-Object { $_.LineNumber.ToString\\(\\) + \": \" + $_.Line.Substring\\(0, [Math]::Min\\(200, $_.Line.Length\\)\\) })",
-      "PowerShell(Select-String *)"
+      "PowerShell(Select-String *)",
+      "Bash(dir C:Users666DesktopRL *)",
+      "PowerShell(Get-ChildItem *)",
+      "PowerShell(& \"C:\\\\Users\\\\666\\\\Desktop\\\\RL\\\\venv\\\\Scripts\\\\python.exe\" -c \"import pettingzoo; print\\('pettingzoo:', pettingzoo.__version__\\)\")",
+      "PowerShell(& \"C:\\\\Users\\\\666\\\\Desktop\\\\RL\\\\venv\\\\Scripts\\\\python.exe\" -c \"import gymnasium_robotics; print\\('gymnasium_robotics OK'\\)\")",
+      "PowerShell(& \"C:\\\\Users\\\\666\\\\Desktop\\\\RL\\\\venv\\\\Scripts\\\\python.exe\" -c \"from pettingzoo.mpe import simple_spread_v3; print\\('pettingzoo MPE OK'\\)\")",
+      "PowerShell(& \"C:\\\\Users\\\\666\\\\Desktop\\\\RL\\\\venv\\\\Scripts\\\\python.exe\" -c \"import pettingzoo; print\\(dir\\(pettingzoo\\)\\)\")",
+      "Bash(Get-ChildItem -Recurse -Filter \"*.log\")",
+      "Bash(Sort-Object LastWriteTime -Descending)",
+      "Bash(Select-Object -First 10)",
+      "Bash(Format-Table Name, DirectoryName, LastWriteTime)",
+      "PowerShell(C:\\\\Users\\\\666\\\\Desktop\\\\RL\\\\venv\\\\Scripts\\\\python.exe -c \"import gymnasium as gym; import gymnasium_robotics; gym.register_envs\\(gymnasium_robotics\\); env = gym.make\\('FetchReach-v4'\\); obs, _ = env.reset\\(\\); print\\('obs_dim:', obs['observation'].shape\\); print\\('goal_dim:', obs['desired_goal'].shape\\); print\\('action_dim:', env.action_space.shape\\); env.close\\(\\); print\\('OK'\\)\")"
     ]
   }
 }

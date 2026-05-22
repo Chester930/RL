@@ -1,0 +1,1327 @@
+=== File: .\00_Imitation\2004_BC\README.md ===
+RL 中最難的部分是「獎勵設計」和「探索」——BC 完全繞開這兩個問題。
+這讓它成為許多機器人任務的起點。
+
+---
+
+## 架構
+=======================
+
+=== File: .\00_Imitation\2004_BC\README.md ===
+與 SAC 的 PolicyNetwork 比較：
+
+| | BC | SAC |
+|---|---|---|
+| 策略型別 | 確定性（直接輸出動作）| 隨機性（輸出均值 + std）|
+| 訓練訊號 | MSE（監督學習）| Bellman + Entropy |
+| 需要獎勵？ | ❌ | ✅ |
+| 需要探索？ | ❌（從 demo 取樣）| ✅（ε / entropy）|
+
+---
+
+## 核心限制：Distribution Shift（分佈偏移）
+
+BC 只學過「專家訪問過的狀態」。在這些狀態裡，BC 能做出接近專家的動作。
+
+**問題來自部署時的誤差累積：**
+=======================
+
+=== File: .\00_Imitation\2004_BC\README.md ===
+比喻：學生只讀過考試範本，遇到一道沒見過的題目就緊張，
+緊張導致下一題也做錯，誤差雪球般越滾越大。
+
+**Pendulum 的量化展示：**
+
+SAC expert 在 Pendulum 上快速將擺錘直立（θ→0），
+因此 demo 資料 80%+ 都是 θ ≈ 0 附近的狀態。
+
+| 初始角度 | SAC Expert | BC Policy | 說明 |
+|---|---|---|---|
+| 0°（直立）| -xxx | -xxx | BC 在訓練分佈內，表現接近專家 |
+| 90°（水平）| -xxx | -xxx | BC 開始失準 |
+| 180°（朝下）| -xxx | -xxx | BC 幾乎從未見過此狀態 → 崩潰 |
+
+*（實際數字在跑完 train.py 後填入）*
+
+---
+
+## 使用方式
+=======================
+
+=== File: .\01_Tabular_Basics\1950s_DP\README.md ===
+這個格子的 V = 走出去能得到的獎勵 + (下一個格子的 V × 折扣 γ)
+=======================
+
+=== File: .\01_Tabular_Basics\1950s_DP\README.md ===
+策略評估：V(s) = 用 policy[s] 那個方向走，期望能得幾分
+最佳化：  V(s) = 試所有方向，取最高分的那個
+=======================
+
+=== File: .\01_Tabular_Basics\1950s_DP\README.md ===
+格子 (3,1) 試 4 個方向：
+  往左 → 可能到 (3,0) 那是洞口，分數 = 0 → 期望分數低
+  往下 → 超出地圖，原地不動              → 期望分數中等
+  往右 → 可能到 (3,2) 離終點近，分數高   → 期望分數最高 ✓
+  往上 → 到 (2,1)，分數中等             → 期望分數中等
+
+→ 更新 V(3,1) = 往右方向的期望分數
+=======================
+
+=== File: .\01_Tabular_Basics\1950s_DP\README.md ===
+`(1 - done)` 的作用：如果下一格是洞口或終點（遊戲結束），未來就沒有更多分數，所以不加。
+
+**價值疊代主迴圈：**
+=======================
+
+=== File: .\01_Tabular_Basics\1950s_DP\README.md ===
+---
+
+## 5. 演演算法二：策略疊代 (Policy Iteration)
+
+### 白話說明
+
+> 先定一套走法，評估這套走法能得幾分，再根據分數改進走法，重複直到走法不再改變。
+
+**第一步：隨便定一套初始走法（例如：所有格子都往左走）**
+=======================
+
+=== File: .\01_Tabular_Basics\1950s_DP\README.md ===
+**第二步（評估）：按照這套走法走，計算每個格子的期望分數**
+
+注意：這裡不試其他方向，只算「走法規定的那個方向」會得幾分，一直算到分數穩定為止。
+
+「全往左」是爛走法，所以算出來的分數很低，但這是如實反映這套走法的結果。
+
+**第三步（改進）：拿著算好的分數，對每個格子問「換個方向會更好嗎？」**
+=======================
+
+=== File: .\01_Tabular_Basics\1950s_DP\README.md ===
+**第四步：改完走法之後，回到第二步重新評估新走法**
+
+**直到某輪改進後，所有格子的走法都沒有改變 → 這套走法已經是最佳的了，停止**
+
+### 為什麼只需要 7 輪？
+
+每輪的改進都是「有完整資訊支撐」的大幅更新——先把當前走法徹底評估清楚，再一口氣把所有格子能改的都改掉。相比 VI 的每次只微調一點點，PI 每輪改進的幅度大很多，所以輪數少得多。
+
+### 逐步運算記錄
+
+執行 `python train.py` 後，同目錄會自動產生 `training_log.md`。
+
+裡面記錄 PI 每一輪（共 7 輪）的完整資料：評估後的 V^π 表格、哪些格子改變了方向、改變前後的箭頭、以及改進後的完整策略表格。
+
+**規律：** 每輪評估都比上一輪更精確（因為走法更好了），改進時能做出更大的調整。PI 只需要 7 輪就能找到最佳走法，因為每輪都是「充分評估後的有資訊改進」，而不是像 VI 那樣每次只微調一點點。
+
+### 關鍵程式碼（agent.py）
+
+**步驟二：評估當前走法（只算固定方向的分數）：**
+=======================
+
+=== File: .\01_Tabular_Basics\1950s_DP\README.md ===
+注意：這裡不取 max，只算 `policy[s]` 那個固定方向的期望分數。
+
+**步驟三：改進走法（換成分數更高的方向）：**
+=======================
+
+=== File: .\01_Tabular_Basics\1950s_DP\README.md ===
+### 為什麼每次改進都不會變差？
+
+因為我們是「知道了現在走法的分數之後，才換成更好的方向」。換的條件是「新方向分數 ≥ 舊方向分數」，所以每次只會持平或變好，絕對不會變差。
+
+有限的格子數量 × 每次只進不退 → 一定會在有限輪數內找到最佳走法。
+
+---
+
+## 6. 實際執行
+
+### 安裝與執行
+=======================
+
+=== File: .\01_Tabular_Basics\1950s_DP\README.md ===
+FrozenLake 的規則可以查表，所以 DP 能用。但現實世界呢？
+
+- 下圍棋：每一步之後的局面機率是多少？→ 根本算不出來
+- 控制機械手臂：物理碰撞的精確機率？→ 沒有公式
+- 股票交易：明天漲跌的機率？→ 沒人知道
+
+→ **這催生了「不需要知道規則」的方法：蒙特卡羅（MC）直接讓 Agent 去玩，從實際結果裡學。**
+
+### 問題二：格子數一多，表格就爆了
+
+本例 16 個格子 × 4 個方向 = 64 格，小事一樁。
+
+但如果是 Atari 電玩遊戲，畫面有 84×84 個畫素，每個畫素有 256 種顏色——狀態數量是天文數字，根本存不下這張表。
+
+→ **這催生了深度強化學習（DQN），用神經網路取代表格，不管狀態有多複雜都能處理。**
+
+### 演化脈絡
+=======================
+
+=== File: .\01_Tabular_Basics\1980s_MC\README.md ===
+以機率 ε  → 隨機選一個動作（探索）
+以機率 1-ε → 選 Q 最高的動作（利用）
+=======================
+
+=== File: .\01_Tabular_Basics\1980s_MC\README.md ===
+重複以下流程 N 次（N = 50,000 集）：
+
+步驟一：用 ε-greedy 走完整一集
+         記錄：(格子, 動作, 獎勵) × 全程步數
+
+步驟二：從最後一步往前，倒算每步的 G 值
+         $$G_t = r_t + \gamma G_{t+1}$$
+         （最後一步的 G_{t+1} = 0）
+
+步驟三：對每個 (格子, 動作) 組合，只取這集中第一次出現的 G 來更新
+         N(s,a) ← N(s,a) + 1
+         Q(s,a) ← Q(s,a) + (1/N) × (G - Q(s,a))
+
+步驟四：ε 稍微衰減（× 0.9999）
+
+步驟五：回到步驟一，繼續下一集
+=======================
+
+=== File: .\01_Tabular_Basics\1988_TD_Lambda\README.md ===
+以機率 ε   → 隨機選一個動作（探索）
+以機率 1-ε → 選 Q 最高的動作（利用）
+=======================
+
+=== File: .\01_Tabular_Basics\1989_QLearning\README.md ===
+α=0.1 時：每次更新只移動 10% 的距離
+         → 不會因為一次隨機結果就大幅改變估計
+         → 多次更新後，Q 值慢慢收斂到真實的 Q*
+=======================
+
+=== File: .\01_Tabular_Basics\1989_QLearning\README.md ===
+以機率 ε   → 隨機選一個動作（探索）
+以機率 1-ε → 選 Q 最高的動作（利用）
+=======================
+
+=== File: .\01_Tabular_Basics\1989_QLearning\README.md ===
+重複以下流程 N 次（N = 20,000 集）：
+
+步驟一：觀察初始格子 s，用 ε-greedy 選動作 a
+
+步驟二：走一步，觀察 r 和下一格 s′
+
+步驟三：計算異策略 TD 目標
+         $$\text{Target} = r + \gamma \max_{a'} Q(s', a')$$
+         （集數結束時：$$\text{Target} = r$$）
+
+步驟四：計算 TD 誤差
+         $$\delta = \text{Target} - Q(s, a)$$
+
+步驟五：更新 Q(s, a)
+         $$Q(s, a) \leftarrow Q(s, a) + \alpha \delta$$
+
+步驟六：s ← s′；若集數未結束，回到步驟一
+
+步驟七：ε 稍微衰減（× 0.9998）
+
+步驟八：回到步驟一，繼續下一集
+=======================
+
+=== File: .\01_Tabular_Basics\1994_SARSA\README.md ===
+以機率 ε   → 隨機選一個動作（探索）
+以機率 1-ε → 選 Q 最高的動作（利用）
+=======================
+
+=== File: .\01_Tabular_Basics\1994_SARSA\README.md ===
+重複以下流程 N 次（N = 20,000 集）：
+
+步驟一：觀察初始格子 s，用 ε-greedy 選動作 a
+
+步驟二：走一步，觀察 r 和下一格 s′
+
+步驟三：用 ε-greedy 選下一動作 a′（必須在更新前選！）
+
+步驟四：計算同策略 TD 目標
+         $$\text{Target} = r + \gamma Q(s', a')$$
+         （集數結束時：$$\text{Target} = r$$）
+
+步驟五：計算 TD 誤差
+         $$\delta = \text{Target} - Q(s, a)$$
+
+步驟六：更新 Q(s, a)
+         $$Q(s, a) \leftarrow Q(s, a) + \alpha \delta$$
+
+步驟七：s ← s′，a ← a′（直接複用剛才選的 a′，不重新選）
+
+步驟八：若集數未結束，回到步驟二；ε 稍微衰減（× 0.9998）
+=======================
+
+=== File: .\01_Tabular_Basics\1995_NStep_TD\README.md ===
+步驟：  1    2    3    4    5    6    7    8
+格子：  s1   s2   s3   s4   s5   s6   s7   s8
+獎勵：  r1   r2   r3   r4   r5   r6   r7   r8
+
+4步視窗的滑動：
+
+步驟 4 完成時 → 視窗 [1,2,3,4] → 計算 G，更新 Q(s1, a1)
+步驟 5 完成時 → 視窗 [2,3,4,5] → 計算 G，更新 Q(s2, a2)
+步驟 6 完成時 → 視窗 [3,4,5,6] → 計算 G，更新 Q(s3, a3)
+步驟 7 完成時 → 視窗 [4,5,6,7] → 計算 G，更新 Q(s4, a4)
+...
+=======================
+
+=== File: .\01_Tabular_Basics\1995_NStep_TD\README.md ===
+步驟：  10   11   12   13（終點 r=+1）
+         ↑────────────────↑
+   更新 Q(步驟10)   ←   r=+1 往前傳了 4 步！
+=======================
+
+=== File: .\01_Tabular_Basics\1995_NStep_TD\README.md ===
+G_{t:t+n} = r_{t+1} + γ × r_{t+2} + ... + γ^{n-1} × r_{t+n}
+           + γ^n × Q(s_{t+n}, a_{t+n})    ← 第 n 步後用 Q 估計
+
+Q(s_t, a_t) ← Q(s_t, a_t) + α × [G_{t:t+n} − Q(s_t, a_t)]
+=======================
+
+=== File: .\01_Tabular_Basics\Robot_Sweeper_QLearning\README.md ===
+text
+ [ 0.00 -0.50  0.00  0.00]
+=======================
+
+=== File: .\02_Value_Based_Deep\2013_DQN\README.md ===
+Q_theta(s, a)   ←   神經網路近似
+取代
+Q[state, action]  ←   表格查詢
+=======================
+
+=== File: .\02_Value_Based_Deep\2013_DQN\README.md ===
+桿子（用鉸鏈固定，可自由旋轉）
+                    │
+                    │  ← θ（角度，直立時 = 0）
+                    │
+               ┌────┴────┐
+               │  小 車  │  ← x（位置，中央 = 0）
+               └─────────┘
+    ←──────────────────────────────→
+    軌道（x = −4.8 ～ +4.8，超出即結束）
+    ← 推左                     推右 →
+=======================
+
+=== File: .\02_Value_Based_Deep\2013_DQN\README.md ===
+觀測值（連續 4 維）：
+  s[0]  x     ：小車位置（−4.8 ～ +4.8，超出結束）
+  s[1]  ẋ     ：小車速度（正 = 往右）
+  s[2]  θ     ：桿子角度（弧度，正 = 往右傾，|θ|>0.209 倒下）
+  s[3]  θ̇     ：桿子角速度（正 = 往右加速傾倒）
+
+動作（離散 2 維）：
+  0 = 向左推力
+  1 = 向右推力
+
+獎勵：每活過一步 r = +1（沒有方向提示，純粹靠存活時間）
+終止：|θ| > 0.209（約 12°）或 |x| > 2.4，或撐過 500 步
+目標：讓桿子不倒，盡量活到 500 步（回報 = 存活步數）
+=======================
+
+=== File: .\02_Value_Based_Deep\2013_DQN\README.md ===
+y = r + γ × max_{a'} Q(s', a')
+=======================
+
+=== File: .\02_Value_Based_Deep\2013_DQN\README.md ===
+線上網路 Q_theta     ← 每步更新，用來選動作和計算當前 Q
+目標網路 Q_theta-    ← 定期同步，只用來計算 TD 目標 y
+=======================
+
+=== File: .\02_Value_Based_Deep\2013_DQN\README.md ===
+每 500 步：Q_theta-  ←  Q_theta
+=======================
+
+=== File: .\02_Value_Based_Deep\2013_DQN\README.md ===
+如果桿子已經倒了（done = True）：
+    正確答案 = 這步的獎勵 r（沒有未來了，就這樣）
+
+如果還在繼續（done = False）：
+    正確答案 = 這步的獎勵 r + 0.99 × （下個狀態最好能拿到多少）
+                                         ↑
+                              由「目標網路」來估計這個數字
+=======================
+
+=== File: .\02_Value_Based_Deep\2013_DQN\README.md ===
+差距（誤差）= y（正確答案）− Q_theta(s, a)（網路的預測）
+
+差距大 → 網路猜很錯 → 大幅調整引數
+差距小 → 網路猜接近 → 小幅微調
+=======================
+
+=== File: .\02_Value_Based_Deep\2013_DQN\README.md ===
+MSE：   L = (y - Q)^2                    對異常值敏感
+Huber： L = (y - Q)^2 / 2        （|y-Q| ≤ 1）
+        L = |y - Q| - 1/2         （|y-Q| > 1）
+=======================
+
+=== File: .\02_Value_Based_Deep\2015_DoubleDQN\README.md ===
+a* = argmax_{a'} Q_target(s', a')       # 同一個網路進行選擇與評估
+y  = r + gamma * Q_target(s', a*)
+=======================
+
+=== File: .\02_Value_Based_Deep\2015_DoubleDQN\README.md ===
+a* = argmax_{a'} Q_online(s', a')       # 線上網路選擇
+y  = r + gamma * Q_target(s', a*)       # 目標網路評估
+=======================
+
+=== File: .\02_Value_Based_Deep\2015_PER\README.md ===
+P(i) = p_i^alpha / sum_k p_k^alpha
+
+其中 p_i = |delta_i| + epsilon    (比例式變體)
+      p_i = 1 / rank(i)             (排名式變體)
+=======================
+
+=== File: .\02_Value_Based_Deep\2015_PER\README.md ===
+w_i = (1 / (N * P(i)))^beta
+
+權重會進行歸一化：w_i /= max_j w_j
+=======================
+
+=== File: .\02_Value_Based_Deep\2015_PER\README.md ===
+42          <- 總優先權 (根節點)
+         /   \
+       29     13
+      /  \   /  \
+    13   16  5   8   <- 葉節點優先權 (個別樣本)
+=======================
+
+=== File: .\02_Value_Based_Deep\2016_A3C\README.md ===
+輸入狀態（4 維）
+  │
+  ▼
+共享骨幹（MLP 256維）← 提取對演員和評論家都有用的特徵
+  │
+  ├──▶ 演員輸出頭 → logits → softmax → π(←), π(→)
+  │     「推左的機率 40%，推右的機率 60%」
+  │
+  └──▶ 評論家輸出頭 → V(s)
+        「這個狀態我預期能再活 87 步」
+=======================
+
+=== File: .\02_Value_Based_Deep\2016_A3C\README.md ===
+優勢 (Advantage):  A_t = G_t - V(s_t)    其中 G_t = r_t + gamma*r_{t+1} + ... + gamma^{n-1}*r_{t+n} + gamma^n * V(s_{t+n})
+
+演員損失 (Actor loss):   L_actor  = -log pi(a_t | s_t) * A_t
+評論家損失 (Critic loss):  L_critic = (V(s_t) - G_t)^2
+熵損失 (Entropy):         L_entropy = -H(pi(s_t))   [鼓勵探索]
+
+總損失:  L = L_actor + c_v * L_critic - c_e * L_entropy
+=======================
+
+=== File: .\02_Value_Based_Deep\2016_A3C\README.md ===
+G_t   = 從這步開始，接下來 n 步實際拿到的折扣回報（真實成績）
+V(s_t) = 評論家對「這個狀態」的預期（平均成績）
+A_t   = G_t - V(s_t)   ← 實際 - 預期
+=======================
+
+=== File: .\02_Value_Based_Deep\2016_A3C\README.md ===
+評論家說：「從這個狀態出發，平均能再活 80 步」（V = 80）
+這次實際撐了 120 步（G = 120）
+優勢 A = 120 - 80 = +40   ← 比預期好！
+
+評論家說：「平均能活 80 步」
+這次只活了 30 步（G = 30）
+優勢 A = 30 - 80 = -50    ← 比預期差
+=======================
+
+=== File: .\02_Value_Based_Deep\2016_A3C\README.md ===
+L_actor = -log π(a|s) × A_t
+=======================
+
+=== File: .\02_Value_Based_Deep\2016_A3C\README.md ===
+A_t > 0（這次比預期好）：
+  → 我們想「增加」選這個動作的機率
+  → log π 越大（機率越高）越好
+  → 損失 = -log π × (+) = 負數，梯度下降會提高 π
+
+A_t < 0（這次比預期差）：
+  → 我們想「降低」選這個動作的機率
+  → 損失 = -log π × (-) = 正數，梯度下降會降低 π
+=======================
+
+=== File: .\02_Value_Based_Deep\2016_A3C\README.md ===
+L_critic = (V(s_t) - G_t)²
+=======================
+
+=== File: .\02_Value_Based_Deep\2016_A3C\README.md ===
+H(π) = -Σ π(a|s) × log π(a|s)   ← 策略的「不確定程度」
+
+策略接近均勻分佈時（π ≈ [0.5, 0.5]）：H 高（很不確定）
+策略接近確定性時  （π ≈ [1.0, 0.0]）：H 低（非常確定）
+=======================
+
+=== File: .\02_Value_Based_Deep\2016_DuelingDQN\README.md ===
+Q(s, a) = V(s) + A(s, a) - mean_{a'} A(s, a')
+=======================
+
+=== File: .\02_Value_Based_Deep\2016_DuelingDQN\README.md ===
+V(s)    = 這個狀態本身的分數
+A(s, a) = 「選動作 a」比「選平均動作」好多少分
+
+Q(s, a) = V(s) + A(s, a) - mean(A)
+         ↑ 狀態分   ↑ 動作額外貢獻   ↑ 平均修正
+=======================
+
+=== File: .\02_Value_Based_Deep\2016_DuelingDQN\README.md ===
+V(s)    = 99    ← 這個狀態本身很好，不管推哪邊都有機會活很久
+A(←)    = +0.3  ← 往左稍微好一點
+A(→)    = -0.3  ← 往右稍微差一點
+mean(A) = 0.0   ← 平均優勢
+
+Q(←) = 99 + 0.3 - 0.0 = 99.3
+Q(→) = 99 + (-0.3) - 0.0 = 98.7
+=======================
+
+=== File: .\02_Value_Based_Deep\2016_DuelingDQN\README.md ===
+V(s)    = 20    ← 這個狀態本身很危險
+A(←)    = +8    ← 往左（正確方向）好很多
+A(→)    = -8    ← 往右會馬上倒
+mean(A) = 0.0
+
+Q(←) = 20 + 8 - 0.0 = 28   ← 還有救
+Q(→) = 20 + (-8) - 0.0 = 12 ← 幾乎沒救
+=======================
+
+=== File: .\02_Value_Based_Deep\2016_DuelingDQN\README.md ===
+普通 DQN：選了「往左」→ 只更新 Q(s, 左)，Q(s, 右) 沒動
+
+Dueling：  選了「往左」→ 更新 A(s, 左)，也更新 V(s)
+                         V(s) 更準了 → Q(s, 右) 也自動變準了！
+=======================
+
+=== File: .\02_Value_Based_Deep\2016_DuelingDQN\README.md ===
+狀態 ->  共享骨幹網路 (CNN 或 MLP)
+                |
+         ┌─────┴──────┐
+     價值流 (Value)   優勢流 (Advantage)
+     FC -> V(s)     FC -> A(s, a_1..n)
+                |
+         Q = V + A - mean(A)
+=======================
+
+=== File: .\02_Value_Based_Deep\2016_DuelingDQN\README.md ===
+輸入（4個數字：位置、速度、角度、角速度）
+  │
+  ▼
+共享骨幹（MLP，把 4 個數字轉換成 256 個特徵）
+  │
+  ├──▶ 價值流：256 → 1 個數字（V(s)，這個狀態值多少）
+  │
+  └──▶ 優勢流：256 → 2 個數字（A(←) 和 A(→)，兩個動作各自的優勢）
+  
+最後合併：
+  Q(←) = V + A(←) - [A(←) + A(→)] / 2
+  Q(→) = V + A(→) - [A(←) + A(→)] / 2
+=======================
+
+=== File: .\02_Value_Based_Deep\2016_DuelingDQN\README.md ===
+拆法 A：V = 0，   A(←) = 100，A(→) = 99   ← V 完全沒意義
+拆法 B：V = 50，  A(←) = 50，  A(→) = 49
+拆法 C：V = 100， A(←) = 0，   A(→) = -1   ← A 才有意義
+=======================
+
+=== File: .\02_Value_Based_Deep\2016_DuelingDQN\README.md ===
+A(←) + A(→) 的平均必須 = 0
+→ 只有拆法 C 的感覺才對（A 的平均是 0，V 承擔主要數值）
+
+實際上：mean(A) = [100 + 99] / 2 = 99.5
+→ Q(←) = V + A(←) - 99.5 ... 這樣 A 就被「歸零」了
+=======================
+
+=== File: .\02_Value_Based_Deep\2016_DuelingDQN\README.md ===
+桿子直立（θ ≈ 0）：
+  Q(←) ≈ 99.3，Q(→) ≈ 98.7   ← 差 0.6，選哪個都差不多
+
+桿子大幅傾斜（θ = 0.15）：
+  Q(←) ≈ 28，Q(→) ≈ 12       ← 差 16，這時選哪個差很多
+=======================
+
+=== File: .\02_Value_Based_Deep\2016_DuelingDQN\README.md ===
+Q(s, a; theta, alpha, beta) = V(s; theta, beta) + [A(s, a; theta, alpha) - (1/|A|) sum_{a'} A(s, a'; theta, alpha)]
+=======================
+
+=== File: .\02_Value_Based_Deep\2016_DuelingDQN\README.md ===
+theta  = 共享骨幹的引數（輸入層 → 256維特徵）
+beta   = 價值流的引數（256維 → V(s) 這一條路的權重）
+alpha  = 優勢流的引數（256維 → A(s,a) 這一條路的權重）
+
+(1/|A|) sum A  =  mean(A)  =  把所有動作的優勢取平均
+=======================
+
+=== File: .\02_Value_Based_Deep\2016_DuelingDQN\README.md ===
+DQN：       特徵 → 線性層 → Q(←), Q(→)            （直接輸出）
+
+Dueling：   特徵 ┬→ 線性層 → V(s)                  （價值流）
+                 └→ 線性層 → A(←), A(→)            （優勢流）
+                         ↓ 合併
+                    Q = V + A - mean(A)
+=======================
+
+=== File: .\02_Value_Based_Deep\2017_RainbowDQN\README.md ===
+原版 DQN 的問題                  → 解法
+
+① Q 值被高估（選動作和評估用同一個網路）→ Double DQN：分開用兩個網路
+② 每筆資料學習機會相同，浪費了重要資料   → PER：錯得多的資料多抽幾次
+③ 每次只更新被選到的動作，其他動作沒學到  → Dueling：V(s) 每次都更新
+④ 只看一步後果，學習訊號傳遞慢           → N-步回報：一次看 n 步後果
+⑤ 只學「平均回報」，丟失了不確定性資訊   → C51：學整個回報的「分佈」
+⑥ ε-greedy 探索太笨，無法針對狀態調整   → NoisyNet：網路內建智慧探索
+=======================
+
+=== File: .\02_Value_Based_Deep\2017_RainbowDQN\README.md ===
+支撐集 (Support): z_i = v_min + i * (v_max - v_min) / (N-1)    針對 i = 0..N-1
+
+網路輸出: p(s, a) ∈ Delta^N    (原子上的機率分佈，經由 softmax)
+
+Q(s, a) = sum_i z_i * p_i(s, a)     (從分佈中計算期望值)
+=======================
+
+=== File: .\02_Value_Based_Deep\2017_RainbowDQN\README.md ===
+T z_i = r + gamma * z_i    (將位移後的原子投影回支撐集)
+=======================
+
+=== File: .\02_Value_Based_Deep\2017_RainbowDQN\README.md ===
+Q(s, ←) = 85   ← 「從這個狀態選往左，預期能活 85 步」
+=======================
+
+=== File: .\02_Value_Based_Deep\2017_RainbowDQN\README.md ===
+C51 輸出（51 個原子的機率）：
+
+往左：
+  0步機率  = 5%
+  10步機率 = 3%
+  ...
+  80步機率 = 12%  ← 峰值在這
+  90步機率 = 10%
+  ...
+  500步機率 = 2%
+
+Q(s, ←) = 0×5% + 10×3% + ... + 80×12% + ... = 85  ← 取期望值才得到 85
+=======================
+
+=== File: .\02_Value_Based_Deep\2017_RainbowDQN\README.md ===
+原子 z_i 的新位置 = r + γ × z_i
+                  （把每個原子往前推一步）
+
+但推完之後原子可能不在原本的格子上
+→ 需要把機率「投影」回最近的兩個格子分配
+→ 這個步驟叫「分佈貝爾曼投影」
+=======================
+
+=== File: .\02_Value_Based_Deep\2017_RainbowDQN\README.md ===
+y = (mu_w + sigma_w * epsilon) x + (mu_b + sigma_b * epsilon)
+=======================
+
+=== File: .\02_Value_Based_Deep\2017_RainbowDQN\README.md ===
+以機率 ε 隨機選動作（探索）
+以機率 1-ε 選最好的動作（利用）
+
+ε 從 1.0 線性衰減到 0.01
+=======================
+
+=== File: .\02_Value_Based_Deep\2017_RainbowDQN\README.md ===
+y = W × x + b    （W 和 b 是固定的學習引數）
+=======================
+
+=== File: .\02_Value_Based_Deep\2017_RainbowDQN\README.md ===
+y = (μ_W + σ_W ⊙ ε_W) × x + (μ_b + σ_b ⊙ ε_b)
+     ↑ 均值      ↑ 雜訊強度  ↑ 隨機雜訊
+=======================
+
+=== File: .\02_Value_Based_Deep\2017_RainbowDQN\README.md ===
+完整 Rainbow > -PER > -Dueling > -NoisyNet > -N-step > -Distributional > -Double
+=======================
+
+=== File: .\02_Value_Based_Deep\2017_RainbowDQN\README.md ===
+結果（從最重要到最不重要）：
+
+移除 Distributional（C51）→ 效果掉最多  ← 最重要！
+移除 N-step            → 效果掉很多    ← 第二重要
+移除 NoisyNet          → 效果掉不少
+移除 Dueling           → 效果掉一些
+移除 PER               → 效果掉一點
+移除 Double DQN        → 效果掉最少    ← 在 Rainbow 裡最不重要
+=======================
+
+=== File: .\03_Policy_Gradient\1992_REINFORCE\README.md ===
+theta <- theta + alpha * G_t * grad_theta log pi(a_t | s_t; theta)
+=======================
+
+=== File: .\03_Policy_Gradient\1992_REINFORCE\README.md ===
+grad_theta J(theta) = E_{pi} [ G_t * grad_theta log pi(a_t | s_t; theta) ]
+=======================
+
+=== File: .\03_Policy_Gradient\1992_REINFORCE\README.md ===
+對數機率技巧: grad E[f(x)] = E[f(x) * grad log p(x)]
+=======================
+
+=== File: .\03_Policy_Gradient\1992_REINFORCE\README.md ===
+針對每個集數 (Episode)：
+    收集軌跡 (Trajectory)：(s_0, a_0, r_1, s_1, a_1, r_2, ..., s_T)
+    針對每個時步 t = 0 到 T-1：
+        G_t = sum_{k=t}^{T} gamma^{k-t} * r_{k+1}
+        theta += alpha * G_t * grad log pi(a_t | s_t; theta)
+=======================
+
+=== File: .\03_Policy_Gradient\1992_REINFORCE\README.md ===
+theta += alpha * (G_t - b(s_t)) * grad log pi(a_t | s_t)
+=======================
+
+=== File: .\03_Policy_Gradient\1992_REINFORCE\README.md ===
+G_t = (G_t - mean(G)) / (std(G) + eps)
+=======================
+
+=== File: .\03_Policy_Gradient\1992_REINFORCE\README.md ===
+回報 (Return)：  G_t = sum_{k=0}^{T-t} gamma^k * r_{t+k+1}
+損失函式 (Loss)： L = -sum_t G_t * log pi(a_t | s_t)     [負號是因為我們要進行最大化]
+更新規則：        theta <- theta - grad L
+=======================
+
+=== File: .\03_Policy_Gradient\2015_TRPO\README.md ===
+最大化：   L(theta) = E_t [ pi_theta(a_t|s_t) / pi_theta_old(a_t|s_t) * A_t ]
+限制條件： KL(pi_theta_old || pi_theta) <= delta
+=======================
+
+=== File: .\03_Policy_Gradient\2015_TRPO\README.md ===
+1. 在舊策略 pi_old 下進行資料取樣 (Rollouts)
+2. 計算優勢函式 A_t (通常使用 GAE)
+3. 計算策略梯度 g = grad L(theta_old)
+4. 求解 Hx = g 以獲得自然梯度方向 x
+   (H = Fisher 訊息矩陣 = E[grad log pi * grad log pi^T])
+5. 計算滿足 KL 約束的最大步長：
+   s = sqrt(2*delta / x^T H x) * x
+6. 使用回溯線性搜尋 (Backtracking line search) 尋找滿足 KL 的最大實際步長
+7. 使用梯度下降更新評論家 (Critic) 網路
+=======================
+
+=== File: .\03_Policy_Gradient\2015_TRPO\README.md ===
+FVP(v) = d/d_theta [grad KL^T v]   (無須顯式計算 H)
+=======================
+
+=== File: .\03_Policy_Gradient\2015_TRPO\README.md ===
+代理目標函式 (Surrogate objective)： L(theta) = E_t [r_t(theta) * A_t]
+                                 其中 r_t = pi_theta(a|s) / pi_old(a|s)
+
+KL 約束條件： KL(pi_old || pi_new) <= delta
+
+自然梯度方向： d = H^{-1} g     (透過 CG 求解)
+步長大小：     s = sqrt(2*delta / d^T H d) * d
+=======================
+
+=== File: .\03_Policy_Gradient\2016_A2C\README.md ===
+delta_t = r_t + gamma * V(s_{t+1}) - V(s_t)     (TD 誤差)
+
+A_t^GAE(lambda) = sum_{k=0}^{inf} (gamma * lambda)^k * delta_{t+k}
+=======================
+
+=== File: .\03_Policy_Gradient\2016_A2C\README.md ===
+演員損失 (Actor loss)：   L_actor  = -E[log pi(a_t|s_t) * A_t]
+評論家損失 (Critic loss)：  L_critic = E[(V(s_t) - G_t)^2]
+熵獎勵 (Entropy)：        L_ent    = -E[H(pi(s_t))]
+
+總損失：  L = L_actor + c_v * L_critic + c_e * L_ent
+=======================
+
+=== File: .\03_Policy_Gradient\2016_A2C\README.md ===
+GAE:     A_t = sum_{k>=0} (gamma*lambda)^k * [r_{t+k} + gamma*V(s_{t+k+1}) - V(s_{t+k})]
+回報 (Returns)： G_t = A_t + V(s_t)
+=======================
+
+=== File: .\03_Policy_Gradient\2017_PPO\README.md ===
+L_CLIP(theta) = E_t [ min(r_t(theta) * A_t, clip(r_t(theta), 1-eps, 1+eps) * A_t) ]
+
+其中 r_t = pi_theta(a_t|s_t) / pi_theta_old(a_t|s_t)
+=======================
+
+=== File: .\03_Policy_Gradient\2017_PPO\README.md ===
+比率 < 1-eps: 優勢 > 0 → 動作表現良好，但比率被「剪裁」 (不要推動得太過頭)
+比率 > 1+eps: 優勢 < 0 → 動作表現差勁，但比率被「剪裁」 (不要過度抑制)
+其餘情況：     執行標準的策略梯度更新
+=======================
+
+=== File: .\03_Policy_Gradient\2017_PPO\README.md ===
+針對每次更新：
+    1. 使用當前策略 pi_old 收集 T 個步數的資料 (Rollout)
+    2. 計算 GAE 優勢函式 A_t
+    3. 針對每個訓練週期 (Epoch) K：
+       針對每個小批次 (Mini-batch)：
+           計算機率比率 r_t = pi_theta / pi_old
+           L_CLIP = mean(min(r_t * A_t, clip(r_t, 1-eps, 1+eps) * A_t))
+           L_VF = mean((V(s_t) - G_t)^2)
+           L_ENT = mean(H(pi(s_t)))
+           Loss = -L_CLIP + c_v * L_VF - c_e * L_ENT
+           執行梯度更新步驟
+=======================
+
+=== File: .\03_Policy_Gradient\2017_PPO\README.md ===
+機率比率:   r_t(theta) = pi_theta(a_t|s_t) / pi_theta_old(a_t|s_t)
+CLIP 損失:  E_t[min(r_t * A_t, clip(r_t, 1-eps, 1+eps) * A_t)]
+GAE 估計:   A_t = sum_k (gamma*lambda)^k * delta_{t+k}
+總損失函式:  L = L_CLIP - c_v * L_VF + c_e * L_ENT
+=======================
+
+=== File: .\03_Policy_Gradient\2017_PPO\README.md ===
+delta_t = r_t + gamma * V(s_{t+1}) - V(s_t)   ← TD 誤差（低 variance，高 bias）
+A_t = delta_t + (gamma*lambda) * delta_{t+1} + ...  ← 多步加權平均
+=======================
+
+=== File: .\04_Actor_Critic_Continuous\2015_DDPG\README.md ===
+pi(s) -> a    (無機率分佈，無取樣過程)
+=======================
+
+=== File: .\04_Actor_Critic_Continuous\2015_DDPG\README.md ===
+grad_theta J(theta) = E_s [ grad_a Q(s,a)|_{a=pi(s)} * grad_theta pi(s) ]
+=======================
+
+=== File: .\04_Actor_Critic_Continuous\2015_DDPG\README.md ===
+演員 (Actor)：  s -> MLP -> tanh -> a  (連續動作限制在 [-1,1] 區間，再乘以動作縮放倍率)
+評論家 (Critic)： (s, a) -> MLP -> Q(s,a)   (將狀態與動作串聯後作為輸入)
+
+目標網路： theta_target <- tau * theta + (1 - tau) * theta_target  (軟更新)
+=======================
+
+=== File: .\04_Actor_Critic_Continuous\2015_DDPG\README.md ===
+a = pi(s) + 雜訊 (OU 或 高斯)
+=======================
+
+=== File: .\04_Actor_Critic_Continuous\2015_DDPG\README.md ===
+y = r + gamma * Q_target(s', pi_target(s'))
+L_critic = E[(Q(s,a) - y)^2]
+=======================
+
+=== File: .\04_Actor_Critic_Continuous\2015_DDPG\README.md ===
+L_actor = -E[Q(s, pi(s))]    (最大化期望 Q 值)
+=======================
+
+=== File: .\04_Actor_Critic_Continuous\2015_DDPG\README.md ===
+theta_target <- tau * theta + (1 - tau) * theta_target
+=======================
+
+=== File: .\04_Actor_Critic_Continuous\2015_DDPG\README.md ===
+DPG 定理： grad J = E_s[grad_a Q(s,a)|_{a=mu(s)} * grad_theta mu_theta(s)]
+軟更新：   theta' <- tau * theta + (1 - tau) * theta'
+=======================
+
+=== File: .\04_Actor_Critic_Continuous\2018_SAC\README.md ===
+J(pi) = E_pi [ sum_t r_t + alpha * H(pi(.|s_t)) ]
+=======================
+
+=== File: .\04_Actor_Critic_Continuous\2018_SAC\README.md ===
+1. 收集資料 (s, a, r, s') 並存入回放緩衝區 (動作 a ~ pi_theta(.|s))
+
+2. 評論家更新 (軟貝爾曼更新)：
+   a' ~ pi(.|s')
+   y = r + gamma * (min(Q1_target, Q2_target)(s', a') - alpha * log_pi(a'|s'))
+   最小化 (Q1(s,a) - y)^2 + (Q2(s,a) - y)^2
+
+3. 策略更新 (演員)：
+   最大化 E_a~pi [min(Q1, Q2)(s,a) - alpha * log_pi(a|s)]
+   (使用重引數化技巧：a = tanh(mu + sigma * epsilon))
+
+4. 溫度引數 alpha 更新 (自動調校)：
+   alpha* = argmin_alpha E_a~pi [-alpha * (log_pi(a|s) + H_target)]
+=======================
+
+=== File: .\04_Actor_Critic_Continuous\2018_SAC\README.md ===
+z ~ N(mu(s), sigma(s))   (從高斯分佈取樣)
+a = tanh(z) * scale       (壓縮至有限的動作區間)
+=======================
+
+=== File: .\04_Actor_Critic_Continuous\2018_SAC\README.md ===
+log pi(a|s) = log N(z|mu,sigma) - sum log(1 - tanh^2(z))
+=======================
+
+=== File: .\04_Actor_Critic_Continuous\2018_SAC\README.md ===
+L(alpha) = -alpha * (log_pi(a|s) + H_target)
+=======================
+
+=== File: .\04_Actor_Critic_Continuous\2018_TD3\README.md ===
+y = r + gamma * min(Q1_target(s', pi_target(s')), Q2_target(s', pi_target(s')))
+=======================
+
+=== File: .\04_Actor_Critic_Continuous\2018_TD3\README.md ===
+a' = clip(pi_target(s') + clip(N(0, sigma), -c, c), -a_max, a_max)
+=======================
+
+=== File: .\05_Model_Based\1990_DynaQ\README.md ===
+真實經驗 -> 直接強化學習 (Direct RL / Q-Learning) + 模型學習 (Model Learning)
+                                                |
+                                            規劃 (Planning，執行 K 次模擬更新)
+=======================
+
+=== File: .\05_Model_Based\1990_DynaQ\README.md ===
+初始化 Q(s,a) 以及模型 Model
+針對每一步：
+    a = epsilon-greedy(Q(s))
+    r, s' = env.step(a)
+    
+    (1) 直接強化學習： Q(s,a) += alpha * [r + gamma * max Q(s') - Q(s,a)]
+    
+    (2) 模型更新： Model[s][a] = (r, s')
+    
+    (3) 規劃 (重複執行 K 次)：
+        s_sim, a_sim = 隨機從先前見過的狀態-動作對中挑選
+        r_sim, s_sim' = Model[s_sim][a_sim]
+        Q(s_sim, a_sim) += alpha * [r_sim + gamma * max Q(s_sim') - Q(s_sim, a_sim)]
+=======================
+
+=== File: .\05_Model_Based\1990_DynaQ\README.md ===
+K = 0:    純粹的 Q-Learning (無模型，無規劃)
+K = 5:    每一步額外執行 5 次虛擬更新
+K = 50:   每一步額外執行 50 次虛擬更新 (收斂速度顯著加快)
+K = inf:  趨近於動態規劃 (對整個模型進行全面掃描遍歷)
+=======================
+
+=== File: .\05_Model_Based\1990_DynaQ\README.md ===
+真實世界 (Real World) -> 經驗 (Experience) -> 直接強化學習更新 (Direct RL Update)
+                                         -> 模型更新 (Model Update)
+
+學得模型 (Model) -> 模擬經驗 (Simulated Experience) -> 規劃更新 (Planning Updates)
+=======================
+
+=== File: .\05_Model_Based\2018_WorldModels\README.md ===
+V (視覺/Vision)     ： 原始畫素觀測 -> 潛在向量 z (使用 VAE)
+M (記憶/Memory)     ： (z_t, a_t, h_t) -> h_{t+1} (使用 MDN-RNN)
+C (控制器/Controller)： [z_t, h_t] -> 動作 (線性層，由 CMA-ES 演化)
+=======================
+
+=== File: .\05_Model_Based\2018_WorldModels\README.md ===
+階段 1： 收集隨機取樣資料 (Rollouts)
+        訓練 VAE：ELBO = 重建損失 + KL 散度
+
+階段 2： 將影像幀編碼為 z 序列
+        訓練 MDN-RNN：最小化混合高斯分佈下 $z_{t+1}$ 的負對數似然 (NLL)
+
+階段 3： CMA-ES 演化控制器 C 的權重
+        適應度 (Fitness) = 平均集數獎勵 (可於真實環境或「夢境環境」中測試)
+=======================
+
+=== File: .\05_Model_Based\2019_Dreamer\README.md ===
+真實環境 -> 觀測影像 -> 世界模型 -> 精簡潛在空間
+                                      |
+                                  想像 (想像預測 H 個步數)
+                                      |
+                                  演員-評論家 (Actor-Critic) 訓練
+=======================
+
+=== File: .\05_Model_Based\2019_Dreamer\README.md ===
+確定性狀態：h_t = GRU(h_{t-1}, z_{t-1}, a_{t-1})  (記憶，不含隨機雜訊)
+隨機性狀態：z_t ~ q(z_t | h_t, x_t)                (後驗分佈，使用觀測影像)
+      或者：z_t ~ p(z_t | h_t)                      (先驗分佈，用於預測未來)
+=======================
+
+=== File: .\05_Model_Based\2019_Dreamer\README.md ===
+1. 影像重建： E[||x_t - decoder(h_t, z_t)||^2]
+2. 獎勵預測： E[||r_t - reward_head(h_t, z_t)||^2]
+3. KL 散度：  E[KL(q(z|h,x) || p(z|h))]  (強迫先驗分佈在無觀測時也能精準預測後驗分佈)
+=======================
+
+=== File: .\05_Model_Based\2019_Dreamer\README.md ===
+針對步數 t = 1..H:
+    a_t = actor(h_t, z_t)              (演員根據想像選擇動作)
+    h_{t+1}, z_{t+1} = RSSM.img_step(h_t, z_t, a_t)  (先驗狀態轉移)
+    r_t = reward_head(h_t, z_t)        (想像的獎勵)
+    v_t = critic(h_t, z_t)             (想像的價值)
+
+Lambda 回報： V_t = r_t + gamma * [(1-lambda) * v_{t+1} + lambda * V_{t+1}]
+=======================
+
+=== File: .\05_Model_Based\2019_Dreamer\README.md ===
+編碼器 (Encoder)： 影像 (C, H, W) -> 嵌入向量 (1024)
+RSSM：            (h, z, a, 嵌入向量) -> (h', z')  [後驗，用於編碼真實經驗]
+                  (h, z, a)           -> (h', z')  [先驗，用於想像未來]
+解碼器 (Decoder)： (h, z) -> 原始影像
+獎勵 (Reward)：    (h, z) -> 純量 r
+演員 (Actor)：     (h, z) -> 連續動作
+價值 (Value)：     (h, z) -> 純量 V
+=======================
+
+=== File: .\05_Model_Based\2019_MuZero\README.md ===
+h： 觀測 -> 隱藏狀態          (表示模型 / Representation)
+g： (隱藏狀態, 動作) -> (下一個狀態, 獎勵)  (動態模型 / Dynamics)
+f： 隱藏狀態 -> (策略, 價值)      (預測模型 / Prediction)
+=======================
+
+=== File: .\05_Model_Based\2019_MuZero\README.md ===
+根節點： s_0 = h(obs)
+針對每一次模擬：
+    1. 選擇 (Selection)： 根據樹中的 UCB 分數向下走
+    2. 擴充套件 (Expansion)： 對每個可能動作執行 s_{t+1}, r_t = g(s_t, a_t)
+    3. 評估 (Evaluation)： pi, v = f(s_{t+1})
+    4. 回傳 (Backup)： 將價值沿路徑向上更新至樹根
+
+動作選擇： 根據根節點的造訪次數 (Visit counts) 分佈進行取樣
+=======================
+
+=== File: .\05_Model_Based\2019_MuZero\README.md ===
+s_0 = h(obs_t)
+針對 k = 1..K:
+    pi_k, v_k = f(s_{k-1})
+    r_k, s_k = g(s_{k-1}, a_{t+k-1})
+
+損失函式：
+    策略損失： cross_entropy(pi_k, MCTS_造訪次數_{t+k})
+    價值損失： cross_entropy(v_k, 引導目標_{t+k})
+    獎勵損失： cross_entropy(r_k, r_{t+k})
+=======================
+
+=== File: .\05_Model_Based\2020_MBPO\README.md ===
+理論基礎：k 步模型誤差的增長量級為 O(k * epsilon_m / (1-gamma))
+=> 短步數取樣能將模型偏差 (Model bias) 控制在有限範圍內
+=> 混合真實資料 (5%) 與想像資料 (95%) 來進行 SAC 更新
+=======================
+
+=== File: .\05_Model_Based\2020_MBPO\README.md ===
+初始化：整合模型 (Ensemble model)、SAC 策略、真實緩衝區 (Real_buffer)、模型緩衝區 (Model_buffer)
+
+針對每個真實環境步數：
+    1. 收集真實轉換資料 (Real transition) -> 存入 real_buffer
+    2. 每隔 N 步：在 real_buffer 上訓練整合模型
+    3. 從真實狀態出發，透過模型進行 k 步分支取樣 -> 存入 model_buffer
+    4. 在混合批次（5% 真實 + 95% 模型資料）上執行 G 次 SAC 梯度更新
+=======================
+
+=== File: .\06_Advanced_Specialized\2017_C51_DistRL\README.md ===
+Z(s, a) ~ 在 N 個原子 (Atoms) {z_1, ..., z_N} 上的分類分佈 (Categorical distribution)
+          其中 z_i = v_min + i * (v_max - v_min) / (N-1)
+
+分散式貝爾曼方程式 (Distributional Bellman):
+    T Z(s, a) = R + gamma * Z(s', pi(s'))
+=======================
+
+=== File: .\06_Advanced_Specialized\2017_C51_DistRL\README.md ===
+針對每個原子 z_j:
+    T_z_j = clip(r + gamma*(1-done)*z_j, v_min, v_max)
+    b_j   = (T_z_j - v_min) / delta_z   # 小數索引 (Fractional index)
+    m[floor(b_j)] += p_j * (ceil(b_j) - b_j)
+    m[ceil(b_j)]  += p_j * (b_j - floor(b_j))
+
+損失函式 = -sum_j m_j * log p_j(s, a)   # 交叉熵 (Cross-entropy)
+=======================
+
+=== File: .\06_Advanced_Specialized\2017_HER\README.md ===
+原始目標：  想要達到 (5, 5) — 代理人最後停在 (3, 2)  [失敗，獎勵 = -1]
+HER 重標註： 「目標」改設為 (3, 2) — 此時獎勵 = 0         [成功！]
+
+這兩種轉換資料 (Transitions) 同時都會被存入重播緩衝區。
+=======================
+
+=== File: .\06_Advanced_Specialized\2017_HER\README.md ===
+針對每個回合：
+    1. 使用原始目標 g 進行資料收集
+    2. 將 {(s_t, a_t, r_t, s_{t+1}, g)} 存入重播緩衝區
+
+HER 事後重標註 (以 future 策略為例)：
+    針對時間點 t，從同一個回合中取樣未來的一個時間點 t' > t
+    g_her = 該點實際達到的目標 achieved_goal[t']
+    r_her = 計算獎勵 compute_reward(achieved[t], g_her)   # 通常為 0 或 -1
+    將 {(s_t, a_t, r_her, s_{t+1}, g_her)} 存入重播緩衝區
+
+在混合批次（例如 80% HER 資料 + 20% 原始資料）上訓練 DDPG
+=======================
+
+=== File: .\06_Advanced_Specialized\2017_ICM\README.md ===
+總獎勵 r_total = 外在獎勵 r_extrinsic + eta * ||phi(s') - phi_hat(s')||^2
+                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                                            內在好奇心獎勵 (Intrinsic curiosity reward)
+=======================
+
+=== File: .\06_Advanced_Specialized\2017_ICM\README.md ===
+1. 特徵編碼器 (Feature Encoder): s -> phi(s)
+   透過逆向模型訓練，僅捕捉環境中「可控」的部分。
+
+2. 逆向模型 (Inverse Model): (phi(s), phi(s')) -> a_hat
+   預測是哪一個動作導致了目前的狀態轉移。
+   強迫 phi 忽略那些無法被動作影響的背景幹擾因素。
+
+3. 前向模型 (Forward Model): (phi(s), a) -> phi(s')_hat
+   預測下一個狀態的特徵。預測誤差越高，代表該區域越新奇，給予的好奇心獎勵就越高。
+=======================
+
+=== File: .\06_Advanced_Specialized\2017_ICM\README.md ===
+L_inverse = CE(a_hat, a)                      # 離散動作預測 (Cross-Entropy)
+L_forward = 0.5 * ||phi(s')_hat - phi(s')||^2   # 特徵預測誤差 (MSE)
+
+ICM 總損失 = beta * L_forward + (1-beta) * L_inverse
+
+內在獎勵： r_i = eta * L_forward (計算時需 detach 斷開梯度連結)
+=======================
+
+=== File: .\06_Advanced_Specialized\2017_MADDPG_MARL\README.md ===
+訓練階段：  評論家 (Critic_i) 可以看到「所有」代理人的觀測 + 動作 (全域性資訊)。
+執行階段：  演員 (Actor_i) 僅能看到代理人 i 自己的「區域性」觀測 (分散式執行)。
+=======================
+
+=== File: .\06_Advanced_Specialized\2017_MADDPG_MARL\README.md ===
+針對每個代理人 i:
+    Actor_i(o_i) -> a_i                           # 區域性策略 (Local policy)
+    Critic_i(o_1,...,o_N, a_1,...,a_N) -> Q_i     # 集中式 Q 函式 (Centralized Q-function)
+=======================
+
+=== File: .\06_Advanced_Specialized\2017_MADDPG_MARL\README.md ===
+評論家損失 (Critic loss): MSE(Q_i(x, a_1,...,a_N), y_i)
+    其中 y_i = r_i + gamma * Q'_i(x', mu'_1(o'_1), ..., mu'_N(o'_N))
+
+演員損失 (Actor loss): -E[Q_i(x, a_1, ..., mu_i(o_i), ..., a_N)]
+    (注意：梯度僅流經 Actor_i；計算時其他代理人的動作被視為固定值)
+=======================
+
+=== File: .\06_Advanced_Specialized\2020_CQL_Offline\README.md ===
+L_CQL = L_Bellman + alpha * (E_{a~pi}[Q(s,a)] - E_{a~D}[Q(s,a)])
+                               ^^^^^^^^^^^^^^^^    ^^^^^^^^^^^^^^^^
+                               壓低 (分佈外動作)    推高 (資料集動作)
+=======================
+
+=== File: .\06_Advanced_Specialized\2020_CQL_Offline\README.md ===
+CQL_penalty = logsumexp_{a~Unif + pi}[Q(s,a)] - Q(s, a_dataset)
+
+透過重要性取樣 (Importance sampling) 進行估計：
+    logsumexp ≈ log(1/N * sum_i exp(Q(s, a_i) - log q(a_i)))
+    其中 a_i 取樣自目前策略 pi(a|s) 或均勻分佈 Uniform(-1, 1)
+=======================
+
+=== File: .\06_Advanced_Specialized\2021_IQL_Offline\README.md ===
+V-更新： argmin_V  E_D[ L_tau(Q(s,a) - V(s)) ]   <- 期望分位數回歸 (Expectile regression)
+Q-更新： argmin_Q  E_D[ (r + gamma*V(s') - Q(s,a))^2 ]  <- 安全的貝爾曼備份
+A-更新： argmax_pi E_D[ exp(beta * (Q(s,a) - V(s))) * log pi(a|s) ]  <- 優勢加權回歸 (AWR)
+=======================
+
+=== File: .\06_Advanced_Specialized\2021_IQL_Offline\README.md ===
+L_tau(u) = |tau - I(u<0)| * u^2
+
+- tau = 0.5 -> 普通均方誤差 (MSE)，估計均值。
+- tau = 0.7 -> 上期望分位數 (Upper expectile)，論文預設值。
+- tau -> 1.0 -> 估計最大值 (隱式最大 Q 學習)。
+=======================
+
+=== File: .\06_Advanced_Specialized\2021_IQL_Offline\README.md ===
+演員損失 (Actor loss) = -E[ w(s,a) * log pi(a|s) ]
+w(s,a) = clip(exp(beta * (Q(s,a) - V(s))), max=100)
+
+高優勢 (High advantage) -> 高權重 -> 更強烈地學習 (克隆) 該 (s,a) 動作對。
+=======================
+
+=== File: .\06_Advanced_Specialized\2021_MAPPO_MARL\README.md ===
+MAPPO:  演員 Actor_i(o_i) -> a_i          (分散式，僅需區域性觀測)
+        評論家 Critic_i(s_global) -> V_i  (集中式，訓練時使用全域性狀態)
+
+IPPO:   演員 Actor_i(o_i) -> a_i          (分散式，僅需區域性觀測)
+        評論家 Critic_i(o_i) -> V_i       (分散式，僅限區域性觀測)
+=======================
+
+=== File: .\06_Advanced_Specialized\2021_MAPPO_MARL\README.md ===
+針對每一次取樣 (Rollout):
+    1. 收集所有代理人的 T 步取樣資料。
+    2. 使用全域性 V(s) 與聯合觀測計算 GAE 優勢值 (Advantages)。
+    3. 對所有演員網路執行 PPO 截斷 (Clip) 更新。
+    4. 對所有評論家網路執行 MSE 更新。
+
+演員損失 (Actor loss) = -E[min(r*A, clip(r, 1-eps, 1+eps)*A)] - ent_coef * 熵
+評論家損失 (Critic loss) = MSE(V(s), 回報 returns)
+=======================
+
+=== File: .\07_Modern_RLHF\2022_RLAIF\README.md ===
+RLHF 流程：
+  LLM 產生回答 A、B → 人類選「哪個比較好」→ 訓練 Reward Model → PPO
+
+RLAIF 流程：
+  LLM 產生回答 A、B → AI（Claude/GPT-4）打分 → 訓練 Reward Model → PPO
+=======================
+
+=== File: .\07_Modern_RLHF\2022_RLAIF\README.md ===
+2022_RLAIF/
+├── generate_preferences.py  # 用 AI 生成偏好資料
+├── train_reward_model.py    # 訓練 Reward Model
+├── train_ppo.py             # PPO 微調主模型
+└── README.md
+=======================
+
+=== File: .\07_Modern_RLHF\2022_RLHF_InstructGPT\README.md ===
+第一階段：監督式微調 (Supervised Fine-Tuning, SFT)
+    資料集：人類編寫的演示資料 (Demonstrations)
+    方法：  標準語言模型微調（交叉熵損失）
+    輸出：  SFT 模型 π_SFT
+
+第二階段：訓練獎勵模型 (Reward Model, RM)
+    資料集：人類偏好對比資料 (Chosen > Rejected)
+    方法：  Bradley-Terry 排序損失
+             L = -E[ log σ(r_chosen - r_rejected) ]
+    輸出：  獎勵模型 r_θ
+
+第三階段：PPO-RLHF 強化學習最佳化
+    目標：  極大化 r_θ(prompt, response) - kl_coef * KL(π || π_SFT)
+    方法：  對比參考模型 (Reference model) 並加入 KL 懲罰項的 PPO 演演算法
+    輸出：  InstructGPT 策略 (Policy)
+=======================
+
+=== File: .\07_Modern_RLHF\2022_RLHF_InstructGPT\README.md ===
+獎勵值 = r_RM(x, y) - beta * KL(pi_RL(y|x) || pi_SFT(y|x))
+
+原因：防止策略 (Policy) 過度擬合獎勵模型（稱為獎勵作弊 / Reward Hacking）。
+      確保生成的內容不會偏離參考模型 (SFT) 的分佈太遠。
+beta 值通常在 0.01 到 0.1 之間（InstructGPT 使用自適應調整）。
+=======================
+
+=== File: .\07_Modern_RLHF\2022_RLHF_InstructGPT\README.md ===
+L_RM = -E_{(x,y_w,y_l)~D_pref} [ log σ(r_θ(x, y_w) - r_θ(x, y_l)) ]
+
+y_w = 人類偏好中「較佳 (Chosen)」的回應
+y_l = 人類偏好中「較差 (Rejected)」的回應
+=======================
+
+=== File: .\07_Modern_RLHF\2023_DPO\README.md ===
+最優 RLHF 策略具有以下解析解 (Closed form)：
+    pi*(y|x) ∝ pi_ref(y|x) * exp(r(x,y) / beta)
+
+重新排列可得： r(x,y) = beta * log(pi*(y|x) / pi_ref(y|x)) + Z(x)
+
+將此獎勵項代入 Bradley-Terry 偏好模型：
+    p(y_w > y_l | x) = σ(r(x, y_w) - r(x, y_l))
+                    = σ(beta * [log(pi(y_w|x)/pi_ref(y_w|x))
+                               - log(pi(y_l|x)/pi_ref(y_l|x))])
+
+DPO 損失函式： L = -E[ log σ(beta * (log_ratio_w - log_ratio_l)) ]
+=======================
+
+=== File: .\07_Modern_RLHF\2024_GRPO\README.md ===
+對於每個提示詞 x，取樣一組回應 (Group of G responses):
+    y_1, ..., y_G ~ pi_theta(y|x)
+
+使用獎勵函式為每個回應評分:
+    r_1, ..., r_G = reward_fn(x, y_i)
+
+計算群體相對優勢值 (Group-relative advantage):
+    A_i = (r_i - mean(r)) / std(r)
+
+更新損失函式: L = -E[ min(ratio*A, clip(ratio, 1-eps, 1+eps)*A) ] + beta * KL(pi || pi_ref)
+=======================
+
+=== File: .\07_Modern_RLHF\2024_GRPO\README.md ===
+格式獎勵 (Format reward): 若回應符合 <think>...</think><answer>A</answer> 格式則 +0.1
+準確度獎勵 (Accuracy reward): 若最終答案正確（可透過真值驗證）則 +1.0
+=======================
+
+=== File: .\07_Modern_RLHF\2024_GRPO\README.md ===
+典型的 G 取值在 4 到 16 之間：
+- 較大的 G: 優勢值估計更精準穩定，但單次更新的計算量與視訊記憶體需求較大。
+- 較小的 G: 計算速度快，但估計值的噪聲較大。
+- DeepSeek-R1 在數學推理任務中設定 G = 8。
+=======================
+
+=== File: .\08_Meta_RL\README.md ===
+傳統 RL：任務 A 訓練 → 任務 A 的策略（換任務就重來）
+Meta-RL：大量任務訓練 → 一個可以快速適應任何新任務的策略
+=======================
+
+=== File: .\08_Meta_RL\2016_RL2\README.md ===
+2016_RL2/
+├── agent.py        # RNN-based Meta Agent
+├── train.py        # 訓練指令碼（多工取樣）
+└── training_log.md # 訓練日誌
+=======================
+
+=== File: .\08_Meta_RL\2017_MAML\README.md ===
+Meta-train：從大量任務中學到 θ*
+Inner-loop ：θ' = θ - α ∇L_task(θ)     ← 任務專屬微調（1~5步）
+Outer-loop ：θ  = θ - β ∇L_meta(θ')    ← 跨任務更新初始點
+=======================
+
+=== File: .\08_Meta_RL\2017_MAML\README.md ===
+2017_MAML/
+├── agent.py        # MAML Agent（inner/outer loop）
+├── train.py        # 訓練指令碼
+└── training_log.md # 訓練日誌
+=======================
+
+=== File: .\08_Meta_RL\2019_PEARL\README.md ===
+Encoder：把過去幾筆 (s, a, r, s') 壓縮成 z ~ q(z | context)
+Policy ：π(a | s, z)
+Q-func ：Q(s, a, z)
+
+推斷期：只需少量互動更新 z，不更新整個網路
+訓練期：off-policy，可重複利用舊資料
+=======================
+
+=== File: .\08_Meta_RL\2019_PEARL\README.md ===
+2019_PEARL/
+├── agent.py        # PEARL Agent（encoder + SAC）
+├── train.py        # 訓練指令碼（meta-train + meta-test）
+└── training_log.md # 訓練日誌
+=======================
+
+=== File: .\09_Hierarchical_RL\1999_Options\README.md ===
+1999_Options/
+├── agent.py        # Option-Critic 或手動定義 Option
+├── train.py        # 訓練指令碼
+└── training_log.md # 訓練日誌
+=======================
+
+=== File: .\09_Hierarchical_RL\2017_FeUdal\README.md ===
+Manager（領主）：
+  - 在低維嵌入空間設定「子目標向量」g_t
+  - 每 c 步才更新一次（c=10 左右）
+  - 用 cosine similarity 計算內在獎勵給 Worker
+
+Worker（農奴）：
+  - 每步執行動作
+  - 內在目標：讓當前狀態朝著 g_t 方向移動
+=======================
+
+=== File: .\09_Hierarchical_RL\2017_FeUdal\README.md ===
+2017_FeUdal/
+├── agent.py        # Manager + Worker 兩層網路
+├── train.py        # 訓練指令碼
+└── training_log.md # 訓練日誌
+=======================
+
+=== File: .\09_Hierarchical_RL\2018_HIRO\README.md ===
+High-level（每 c 步）：選擇子目標 g_t（在觀測空間）
+Low-level （每步）  ：選擇原始動作，追求達到 s + g_t
+
+問題：High-level 存舊 transition 時，low-level 策略已更新
+解法：Off-Policy Correction
+  → 重新取樣多個候選 g，挑選讓舊 low-level 行為機率最大的 g'
+  → 用修正後的 g' 取代原始 g 來訓練 High-level
+=======================
+
+=== File: .\09_Hierarchical_RL\2018_HIRO\README.md ===
+2018_HIRO/
+├── agent.py        # High-level + Low-level Agent（TD3 based）
+├── train.py        # 訓練指令碼（off-policy correction）
+└── training_log.md # 訓練日誌
+=======================
+
+=== File: .\10_Safe_RL\README.md ===
+普通 RL：最大化 E[Σ r_t]
+Safe RL：最大化 E[Σ r_t]，同時滿足 E[Σ c_t] ≤ d
+
+  r_t：獎勵（越高越好）
+  c_t：代價 / 違規次數（成本，必須控制在 d 以內）
+  d  ：安全預算（最多可以違規幾次）
+=======================
+
+=== File: .\10_Safe_RL\2017_CPO\README.md ===
+2017_CPO/
+├── agent.py        # CPO Agent（constrained policy update）
+├── train.py        # 訓練指令碼
+└── training_log.md # 訓練日誌
+=======================
+
+=== File: .\10_Safe_RL\2019_PPO_Lagrangian\README.md ===
+原始問題（硬約束）：
+  max E[Σ r_t]  s.t.  E[Σ c_t] ≤ d
+
+轉換（拉格朗日鬆弛）：
+  L(π, λ) = E[Σ r_t] - λ × (E[Σ c_t] - d)
+
+  λ（拉格朗日乘數）自動調整：
+    違規太多 → λ ↑ → 安全代價懲罰加重 → 策略更保守
+    違規太少 → λ ↓ → 懲罰減弱 → 策略更積極
+=======================
+
+=== File: .\10_Safe_RL\2019_PPO_Lagrangian\README.md ===
+2019_PPO_Lagrangian/
+├── agent.py        # PPO + 自動調整 λ
+├── train.py        # 訓練指令碼
+└── training_log.md # 訓練日誌
+=======================
+
