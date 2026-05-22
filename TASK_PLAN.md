@@ -181,30 +181,26 @@ env = gym.make("FetchReach-v3")  # obs 含 achieved_goal / desired_goal
 
 ---
 
-## 延伸任務 C：MADDPG 實作（多智能體） ⬜ 待執行
+## 延伸任務 C：MADDPG 實作（多智能體） ✅ 部分完成
 
-**狀態：⬜ 待執行**
-**預計時間：~45-60 分鐘（安裝 ~5 min + 實作 ~35 min + 訓練 ~15 min）**
-**前置條件：需安裝 pettingzoo MPE 子包**
+**狀態：⚠️ 部分完成（2026-05-22，訓練至 ep 8800/10000 後因時間不足停止）**
 
-### 安裝指令
+### 實際結果
 
-```powershell
-C:\Users\666\Desktop\RL\venv\Scripts\pip.exe install "pettingzoo[mpe]"
-```
+| 指標 | 數值 |
+|---|---|
+| 環境 | SimpleCoopEnv（2 agents，合作最小化狀態範數）|
+| 訓練回合 | 8,800 / 10,000 |
+| 峰值獎勵 | **-3.77**（ep 3600）|
+| 最終均值 | ~-9.0（震盪，未完全收斂）|
 
-### 背景
+### 完成標準
 
-MADDPG（Lowe et al., 2017）：每個 agent 有獨立 actor，但 critic 在訓練時
-可看到所有 agents 的觀察與動作（集中式訓練 + 分散式執行，CTDE）。
-
-### 環境與完成標準
-
-- 環境：`simple_spread_v3`（3 個 agent 要分散覆蓋 3 個目標）
-- [ ] `06_Advanced_Specialized/2017_MADDPG_MARL/agent.py`
-- [ ] `06_Advanced_Specialized/2017_MADDPG_MARL/train.py`
-- [ ] `06_Advanced_Specialized/2017_MADDPG_MARL/training_log.md`
-- [ ] 演算法總覽表更新
+- [x] `06_Advanced_Specialized/2017_MADDPG_MARL/agent.py`
+- [x] `06_Advanced_Specialized/2017_MADDPG_MARL/train.py`
+- [x] `06_Advanced_Specialized/2017_MADDPG_MARL/training_log.md`
+- [x] 演算法總覽表更新
+- [ ] **重跑**（50k 回合，詳見任務 D）
 
 ---
 
@@ -218,6 +214,37 @@ MADDPG（Lowe et al., 2017）：每個 agent 有獨立 actor，但 critic 在訓
 ```
 
 **優先順序：A > B > C**（C 時間不夠可跳過）
+
+---
+
+## 下次任務（待執行）
+
+### 任務 D：重跑建議清單 ⬜
+
+根據本次訓練結果，以下演算法建議重跑：
+
+| 優先 | 演算法 | 原因 | 建議修改 |
+|---|---|---|---|
+| 🔴 高 | MADDPG | 8800 ep 未收斂，震盪大 | episodes: 10k → **50k**；考慮換 `simple_spread_v3` |
+| 🔴 高 | HER | ep 190–200 成功率回落（30%/20%），未穩定 | epochs: 200 → **500**；加 eval 滾動平均 |
+| 🟡 中 | Dreamer | 最終 -836 僅示範用，world model 未真正學習 | 延長至 500 ep；修正 RSSM latent dim |
+| 🟡 中 | MuZero | 回報 ~9 為隨機基線，MCTS simulation 極少 | num_simulations: 提高；CartPole 跑更多集 |
+| 🟢 低 | A2C | CartPole 單環境不穩定（357.5） | 改用 4 平行環境（VecEnv）|
+
+### 執行指令（任務 D）
+
+```powershell
+# MADDPG 50k 回合（修改 train.py total_episodes=50000）
+cd C:\Users\666\Desktop\RL\06_Advanced_Specialized\2017_MADDPG_MARL
+C:\Users\666\Desktop\RL\venv\Scripts\python.exe train.py
+
+# HER 500 epochs
+cd C:\Users\666\Desktop\RL\06_Advanced_Specialized\2017_HER
+# 先修改 train.py n_epochs=500，再執行
+C:\Users\666\Desktop\RL\venv\Scripts\python.exe train.py
+```
+
+**預估時間**：MADDPG ~4.5 小時 / HER ~45 分鐘（可先跑 HER）
 
 ---
 
@@ -243,7 +270,7 @@ MADDPG（Lowe et al., 2017）：每個 agent 有獨立 actor，但 critic 在訓
 | 06 | ICM | MountainCar -145.2（成功登頂）| ✅ |
 | 06 | C51 | CartPole 峰值 372.0 | ✅ |
 | 06 | HER | FetchReach-v4 峰值成功率 80%（Epoch 170）| ✅ |
-| 06 | MADDPG | — | ⬜ 任務 C |
+| 06 | MADDPG | 峰值 -3.77（ep 3600），均值 -9（8800 ep，未完全收斂）| ⚠️ 需重跑 |
 | 07 | RLHF/InstructGPT | SFT 損失 12.24，PPO 平均獎勵 -17.5 | ✅ |
 | 07 | DPO | 準確率 ~50%（合成基線） | ✅ |
 | 07 | GRPO | 損失 ~0.4147，KL≈0 | ✅ |
