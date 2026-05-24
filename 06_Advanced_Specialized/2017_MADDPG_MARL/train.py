@@ -113,7 +113,7 @@ if __name__ == "__main__":
         "n_agents": 2,
         "obs_dim": 4,
         "action_dim": 2,
-        "total_episodes": 10_000,
+        "total_episodes": 50_000,
         "hidden_dim": 128,
         "lr_actor": 1e-4,
         "lr_critic": 1e-3,

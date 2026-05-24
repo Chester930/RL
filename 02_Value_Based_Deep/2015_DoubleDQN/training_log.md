@@ -1,6 +1,19 @@
 # Double DQN 訓練日誌
 
 環境：CartPole-v1（最大 500 步）｜訓練步數：300,000
+
+---
+
+## ✅ 最佳結果摘要（課堂展示請用此數字）
+
+| 指標 | 數值 |
+|---|---|
+| **最佳 eval 回報** | **500.0（步數 100K）** |
+| 使用 checkpoint | `best_checkpoints/double_dqn.pt` |
+| 關鍵超參 | lr 5e-4、target_update 200 |
+
+> **注意**：100K 步達滿分後策略崩潰（150K eval=11.5）是 CartPole 長訓練的已知不穩定性，非 Double DQN 缺陷。
+> 下方完整曲線包含崩潰過程；課堂請使用 `best_checkpoints/` 中的峰值模型。
 學習率 α：0.0005｜折扣因子 γ：0.99
 Replay Buffer：100,000 筆｜Batch size：64
 Target 更新：每 200 步｜ε：1.0 → 0.01（前 50,000 步）

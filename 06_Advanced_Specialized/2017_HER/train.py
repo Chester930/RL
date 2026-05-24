@@ -117,7 +117,7 @@ def train(config: dict) -> HERAgent:
 if __name__ == "__main__":
     config = {
         "env_id": "FetchReach-v4",
-        "n_epochs": 200,
+        "n_epochs": 500,
         "n_episodes_per_epoch": 16,
         "updates_per_epoch": 40,
         "lr": 1e-3,

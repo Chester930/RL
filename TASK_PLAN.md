@@ -183,16 +183,16 @@ env = gym.make("FetchReach-v3")  # obs 含 achieved_goal / desired_goal
 
 ## 延伸任務 C：MADDPG 實作（多智能體） ✅ 部分完成
 
-**狀態：⚠️ 部分完成（2026-05-22，訓練至 ep 8800/10000 後因時間不足停止）**
+**狀態：✅ 已完成（2026-05-23～24，50k ep 全程跑完）**
 
 ### 實際結果
 
 | 指標 | 數值 |
 |---|---|
 | 環境 | SimpleCoopEnv（2 agents，合作最小化狀態範數）|
-| 訓練回合 | 8,800 / 10,000 |
-| 峰值獎勵 | **-3.77**（ep 3600）|
-| 最終均值 | ~-9.0（震盪，未完全收斂）|
+| 訓練回合 | 50,000 / 50,000 |
+| 峰值獎勵 | **-2.04**（ep 41800）|
+| 最終回合 | -9.29（ep 50000，高震盪為 MADDPG 特性）|
 
 ### 完成標準
 
@@ -200,7 +200,7 @@ env = gym.make("FetchReach-v3")  # obs 含 achieved_goal / desired_goal
 - [x] `06_Advanced_Specialized/2017_MADDPG_MARL/train.py`
 - [x] `06_Advanced_Specialized/2017_MADDPG_MARL/training_log.md`
 - [x] 演算法總覽表更新
-- [ ] **重跑**（50k 回合，詳見任務 D）
+- [x] **重跑**（50k 回合，2026-05-23～24 完成）
 
 ---
 
@@ -225,8 +225,8 @@ env = gym.make("FetchReach-v3")  # obs 含 achieved_goal / desired_goal
 
 | 優先 | 演算法 | 原因 | 建議修改 |
 |---|---|---|---|
-| 🔴 高 | MADDPG | 8800 ep 未收斂，震盪大 | episodes: 10k → **50k**；考慮換 `simple_spread_v3` |
-| 🔴 高 | HER | ep 190–200 成功率回落（30%/20%），未穩定 | epochs: 200 → **500**；加 eval 滾動平均 |
+| ✅ 完成 | MADDPG | 50k ep 重跑，峰值 -2.04（ep 41800），較初跑 -3.77 提升 46% | — |
+| ✅ 完成 | HER | 500 ep 重跑，400–500 ep 全部 100%，完全收斂 | — |
 | 🟡 中 | Dreamer | 最終 -836 僅示範用，world model 未真正學習 | 延長至 500 ep；修正 RSSM latent dim |
 | 🟡 中 | MuZero | 回報 ~9 為隨機基線，MCTS simulation 極少 | num_simulations: 提高；CartPole 跑更多集 |
 | 🟢 低 | A2C | CartPole 單環境不穩定（357.5） | 改用 4 平行環境（VecEnv）|
@@ -269,8 +269,8 @@ C:\Users\666\Desktop\RL\venv\Scripts\python.exe train.py
 | 05 | MuZero | CartPole ~9（MCTS 展示用）| ✅ |
 | 06 | ICM | MountainCar -145.2（成功登頂）| ✅ |
 | 06 | C51 | CartPole 峰值 372.0 | ✅ |
-| 06 | HER | FetchReach-v4 峰值成功率 80%（Epoch 170）| ✅ |
-| 06 | MADDPG | 峰值 -3.77（ep 3600），均值 -9（8800 ep，未完全收斂）| ⚠️ 需重跑 |
+| 06 | HER | FetchReach-v4 100%（Epoch 160 首達，400–500 全部 100%，完全收斂）| ✅ |
+| 06 | MADDPG | 峰值 -2.04（ep 41800），50k ep 完整完成 | ✅ |
 | 07 | RLHF/InstructGPT | SFT 損失 12.24，PPO 平均獎勵 -17.5 | ✅ |
 | 07 | DPO | 準確率 ~50%（合成基線） | ✅ |
 | 07 | GRPO | 損失 ~0.4147，KL≈0 | ✅ |

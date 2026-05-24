@@ -118,7 +118,7 @@ if __name__ == "__main__":
     config = {
         "env_id": "HalfCheetah-v4",
         # 對於 D4RL，請使用: "env_id": "halfcheetah-medium-v2"
-        "total_steps": 1_000_000,
+        "total_steps": 200_000,
         "dataset_size": 100_000,   # 用於隨機演示資料集 (Random demo dataset)
         "hidden_dim": 256,
         "lr": 3e-4,
