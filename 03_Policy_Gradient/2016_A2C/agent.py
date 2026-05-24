@@ -74,78 +74,94 @@ class A2CAgent(BaseAgent):
     # ------------------------------------------------------------------
 
     def select_action(self, state: np.ndarray, evaluate: bool = False) -> int:
+        """單狀態動作選擇（用於評估）。不儲存內部轉換資料。"""
         state_t = torch.FloatTensor(state).unsqueeze(0).to(self.device)
         with torch.no_grad():
-            logits, value = self.net(state_t)
+            logits, _ = self.net(state_t)
         if evaluate:
             return int(logits.argmax(dim=1).item())
         dist = torch.distributions.Categorical(logits=logits)
-        action = dist.sample()
-        # 儲存價值以便後續用於 GAE 計算
-        self._values.append(float(value.item()))
-        self._states.append(state)
-        self._actions.append(int(action.item()))
-        return int(action.item())
+        return int(dist.sample().item())
 
-    def store_reward_done(self, reward: float, done: bool) -> None:
-        """儲存當前步的獎勵與結束狀態。"""
-        self._rewards.append(reward)
-        self._dones.append(done)
+    def select_actions(self, states: np.ndarray) -> np.ndarray:
+        """VecEnv 批次動作選擇：states (N, state_dim) → actions (N,)。儲存轉換資料。"""
+        states_t = torch.FloatTensor(states).to(self.device)
+        with torch.no_grad():
+            logits, values = self.net(states_t)
+        dist = torch.distributions.Categorical(logits=logits)
+        actions = dist.sample()
+        self._states.append(states.copy())
+        self._actions.append(actions.cpu().numpy())
+        self._values.append(values.squeeze(1).cpu().numpy())
+        return actions.cpu().numpy()
+
+    def store_reward_done(self, rewards, dones) -> None:
+        """儲存獎勵與結束狀態（接受純量或陣列）。"""
+        self._rewards.append(np.asarray(rewards, dtype=float))
+        self._dones.append(np.asarray(dones, dtype=float))
 
     # ------------------------------------------------------------------
     # Learning (GAE + Actor-Critic update)
     # ------------------------------------------------------------------
 
-    def update(self, next_state: np.ndarray = None, last_done: bool = False) -> dict:
+    def update(self, next_states: np.ndarray, last_dones: np.ndarray) -> dict:
         """
-        計算 GAE 優勢函式並更新演員-評論家網路。
+        GAE 優勢函式計算並更新演員-評論家網路（支援 VecEnv）。
 
-        GAE 優勢估計：
-            delta_t = r_t + gamma * V(s_{t+1}) * (1-done) - V(s_t)
-            A_t = sum_{k=0}^{T-t-1} (gamma * lambda)^k * delta_{t+k}
-
-        回傳：
-            指標字典。
+        next_states: (N, state_dim) — 最後一步的下一觀測（VecEnv 已自動重置）
+        last_dones:  (N,)          — 最後一步的結束旗標（用於 bootstrap 截斷）
         """
         T = len(self._states)
         if T == 0:
             return {}
 
-        # 引導值 (Bootstrap value)
-        if last_done or next_state is None:
-            next_value = 0.0
-        else:
-            ns_t = torch.FloatTensor(next_state).unsqueeze(0).to(self.device)
-            with torch.no_grad():
-                _, v = self.net(ns_t)
-            next_value = float(v.item())
+        states_arr  = np.stack(self._states)   # (T, N, state_dim)
+        actions_arr = np.stack(self._actions)  # (T, N)
+        rewards_arr = np.stack(self._rewards)  # (T, N)
+        dones_arr   = np.stack(self._dones)    # (T, N)
+        values_arr  = np.stack(self._values)   # (T, N)
+        N = states_arr.shape[1]
 
-        # --- GAE 優勢函式計算 (GAE advantage computation) ---
-        # TODO: A_t = sum_k (gamma*lambda)^k * delta_{t+k}
-        advantages = torch.zeros(T, device=self.device)
-        gae = 0.0
-        values = self._values + [next_value]
+        # 引導值：done 的環境 bootstrap = 0
+        ns_t = torch.FloatTensor(next_states).to(self.device)
+        with torch.no_grad():
+            _, next_vals = self.net(ns_t)
+        next_values = next_vals.squeeze(1).cpu().numpy()                      # (N,)
+        next_values = next_values * (1.0 - np.asarray(last_dones, dtype=float))
+
+        # GAE (T, N)
+        advantages = np.zeros_like(rewards_arr)
+        gae = np.zeros(N)
+        all_vals = np.concatenate([values_arr, next_values[np.newaxis]], axis=0)  # (T+1, N)
+
         for t in reversed(range(T)):
-            d = float(self._dones[t])
-            delta = self._rewards[t] + self.gamma * values[t+1] * (1 - d) - values[t]
-            gae = delta + self.gamma * self.gae_lambda * (1 - d) * gae
+            d = dones_arr[t]
+            delta = rewards_arr[t] + self.gamma * all_vals[t+1] * (1-d) - all_vals[t]
+            gae = delta + self.gamma * self.gae_lambda * (1-d) * gae
             advantages[t] = gae
 
-        returns = advantages + torch.FloatTensor(self._values).to(self.device)
+        returns = advantages + values_arr  # (T, N)
 
-        # 優勢函式歸一化 (Normalize advantages)
-        advantages = (advantages - advantages.mean()) / (advantages.std(correction=0) + 1e-8)
+        # 展平 (T*N, ...)
+        state_dim = states_arr.shape[2]
+        states_flat     = states_arr.reshape(-1, state_dim)
+        actions_flat    = actions_arr.reshape(-1)
+        advantages_flat = advantages.reshape(-1)
+        returns_flat    = returns.reshape(-1)
 
-        states_t = torch.FloatTensor(np.array(self._states)).to(self.device)
-        actions_t = torch.LongTensor(self._actions).to(self.device)
+        adv_t = torch.FloatTensor(advantages_flat).to(self.device)
+        ret_t = torch.FloatTensor(returns_flat).to(self.device)
+        adv_t = (adv_t - adv_t.mean()) / (adv_t.std() + 1e-8)
+
+        states_t  = torch.FloatTensor(states_flat).to(self.device)
+        actions_t = torch.LongTensor(actions_flat).to(self.device)
 
         log_probs, entropy, values_t = self.net.evaluate_actions(states_t, actions_t)
         values_t = values_t.squeeze(1)
 
-        actor_loss = -(log_probs * advantages.detach()).mean()
-        critic_loss = nn.functional.mse_loss(values_t, returns.detach())
+        actor_loss   = -(log_probs * adv_t.detach()).mean()
+        critic_loss  = nn.functional.mse_loss(values_t, ret_t.detach())
         entropy_loss = -entropy.mean()
-
         loss = actor_loss + self.c_v * critic_loss + self.c_e * entropy_loss
 
         self.optimizer.zero_grad()
@@ -153,7 +169,7 @@ class A2CAgent(BaseAgent):
         nn.utils.clip_grad_norm_(self.net.parameters(), 0.5)
         self.optimizer.step()
 
-        self.total_steps += T
+        self.total_steps += T * N
         self._states.clear()
         self._actions.clear()
         self._rewards.clear()
@@ -161,10 +177,10 @@ class A2CAgent(BaseAgent):
         self._dones.clear()
 
         return {
-            "total_loss": float(loss.item()),
-            "actor_loss": float(actor_loss.item()),
+            "total_loss":  float(loss.item()),
+            "actor_loss":  float(actor_loss.item()),
             "critic_loss": float(critic_loss.item()),
-            "entropy": float(-entropy_loss.item()),
+            "entropy":     float(-entropy_loss.item()),
         }
 
     def save(self, path: str) -> None:
