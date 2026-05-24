@@ -99,16 +99,16 @@ if __name__ == "__main__":
     config = {
         "env_id":            "CartPole-v1",
         "n_envs":            4,
-        "total_steps":       200_000,
-        "lr":                7e-4,
+        "total_steps":       300_000,
+        "lr":                2e-4,   # 修正：7e-4→2e-4，批次 4× 大需縮小 LR
         "gamma":             0.99,
-        "n_steps":           5,
+        "n_steps":           10,     # 修正：5→10，更長 rollout 改善 GAE 信號
         "gae_lambda":        0.95,
         "c_v":               0.5,
-        "c_e":               0.01,
+        "c_e":               0.02,   # 修正：0.01→0.02，維持探索防止過早崩潰
         "log_freq":          2_000,
-        "eval_freq_updates": 500,   # 每 500 次更新 ≈ 每 10k 步
-        "save_freq_updates": 2_500, # 每 2500 次更新 ≈ 每 50k 步
+        "eval_freq_updates": 500,    # 每 500 次更新 ≈ 每 20k 步
+        "save_freq_updates": 1_875,  # 每 1875 次更新 ≈ 每 75k 步
         "device": "cuda" if torch.cuda.is_available() else "cpu",
     }
     train(config)
