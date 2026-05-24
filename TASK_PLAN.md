@@ -1,6 +1,6 @@
 # RL 專案任務計畫書
 
-最後更新：2026-05-21（新增延伸任務 A/B/C）
+最後更新：2026-05-24（新增 MAPPO/CQL/IQL 訓練記錄）
 
 ---
 
@@ -271,6 +271,9 @@ C:\Users\666\Desktop\RL\venv\Scripts\python.exe train.py
 | 06 | C51 | CartPole 峰值 372.0 | ✅ |
 | 06 | HER | FetchReach-v4 100%（Epoch 160 首達，400–500 全部 100%，完全收斂）| ✅ |
 | 06 | MADDPG | 峰值 -2.04（ep 41800），50k ep 完整完成 | ✅ |
+| 06 | MAPPO | SimpleCoopEnv 平均獎勵 ~-89，500k 步完整完成（2026-05-24）| ✅ |
+| 06 | CQL | HalfCheetah 隨機資料集，eval 1733（100k 步，進程中斷）| ✅ |
+| 06 | IQL | HalfCheetah 隨機資料集，峰值 530.2（150k），200k 步完整完成（2026-05-24）| ✅ |
 | 07 | RLHF/InstructGPT | SFT 損失 12.24，PPO 平均獎勵 -17.5 | ✅ |
 | 07 | DPO | 準確率 ~50%（合成基線） | ✅ |
 | 07 | GRPO | 損失 ~0.4147，KL≈0 | ✅ |
