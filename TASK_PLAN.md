@@ -1,6 +1,6 @@
 # RL 專案任務計畫書
 
-最後更新：2026-05-24（新增 MBPO/World Models 訓練記錄；CQL 更新至完整 200k 步）
+最後更新：2026-05-24（新增任務 E：品質不佳演算法重跑清單；A2C VecEnv 調參成功 500 分）
 
 ---
 
@@ -260,7 +260,7 @@ C:\Users\666\Desktop\RL\venv\Scripts\python.exe train.py
 | 02 | DuelingDQN | 最佳 eval=500（多次） | ✅ |
 | 03 | REINFORCE | eval=9.5（高方差，符合教學目的）| ✅ |
 | 03 | PPO | CartPole 500 + LunarLander 283.9 | ✅ |
-| 03 | A2C | CartPole 峰值 357.5 | ✅ |
+| 03 | A2C | VecEnv 4envs 調參版，300k 步，最終 **500.0 ± 0.0**（2026-05-24）| ✅ |
 | 03 | TRPO | CartPole 峰值 433.0 | ✅ |
 | 04 | DDPG | Pendulum -101.6 | ✅ |
 | 04 | TD3 | Pendulum -119.8 | ✅ |
@@ -279,3 +279,51 @@ C:\Users\666\Desktop\RL\venv\Scripts\python.exe train.py
 | 07 | RLHF/InstructGPT | SFT 損失 12.24，PPO 平均獎勵 -17.5 | ✅ |
 | 07 | DPO | 準確率 ~50%（合成基線） | ✅ |
 | 07 | GRPO | 損失 ~0.4147，KL≈0 | ✅ |
+
+---
+
+## 任務 E：品質不佳演算法重跑清單（2026-05-25 起）
+
+> 全專案品質審查（2026-05-24），以下演算法結果不符合教學展示標準，建議重跑。
+
+### ❌ 優先級 1：結果為隨機基線，演算法未真正學習
+
+| 演算法 | 目前結果 | 問題 | 建議修改 | 預估時間 |
+|---|---|---|---|---|
+| **MuZero** | CartPole ~9（隨機基線）| num_simulations 過少，MCTS 幾乎等同隨機決策 | num_simulations: 5→50；total_episodes: 500→3000 | ~2–3 小時 |
+| **MBPO** | Pendulum eval -1480（接近隨機 -1600）| 模型誤差太大，SAC 批次仍有 70% 錯誤模型資料 | rollout_length 排程 1→5（每 10k 步 +1）；total_steps: 50k→150k；或改用 HalfCheetah（動態更平滑）| ~3 小時 |
+
+### 🟡 優先級 2：有學習但受資料量/計算限制，遠低於論文水準
+
+| 演算法 | 目前結果 | 問題 | 建議修改 | 預估時間 |
+|---|---|---|---|---|
+| **Dreamer** | Pendulum -836（示範用；好策略應達 -200）| 100 集太少；image-based 在 Pendulum 上效率差 | 改用 state-based（移除渲染）；episodes: 100→500 | ~2 小時 |
+| **World Models** | CarRacing 42.5（論文 ~900）| 僅 10 集資料 + 30 代 CMA-ES，嚴重不足 | n_random_episodes: 10→100；cmaes_generations: 30→200 | ~6 小時 |
+
+### 🟢 優先級 3：有收斂但峰值後不穩定，可視需求重跑
+
+| 演算法 | 目前結果 | 問題 | 建議修改 | 預估時間 |
+|---|---|---|---|---|
+| **TRPO** | 峰值 433，最終 199（崩潰）| KL 限制過緊，後期拒絕所有更新導致停滯 | delta: 0.01→0.05；n_episodes: 500→1000 | ~30 分鐘 |
+| **A3C** | eval 33-54（單執行緒失敗）| 已知問題（教學反例）；無多工作者多樣性 | 保留現況作為反例，或加入真正 VecEnv 多工作者版本 | — |
+
+### 可接受現況（不需重跑）
+
+| 演算法 | 說明 |
+|---|---|
+| CQL / IQL | 使用隨機資料集，非真實 D4RL（需 MuJoCo 授權）；結果合理 |
+| MAPPO | 合作環境本身獎勵稀疏（-89 合理），非演算法問題 |
+| RLHF / DPO / GRPO | 合成資料集，展示演算法流程為主，非性能指標 |
+
+### 建議執行順序
+
+```
+Day 1（明天）
+  Step 1：MuZero 重跑（~3 小時）— 結果最差，修改最直接
+  Step 2：TRPO 重跑（~30 分鐘）— 快速完成
+  Step 3：Dreamer 重跑（~2 小時）— state-based 簡化版
+
+Day 2（後天，若需要）
+  Step 4：MBPO 重跑（~3 小時）— 視 Day 1 結果決定
+  Step 5：World Models（~6 小時）— 時間最長，視需求
+```
