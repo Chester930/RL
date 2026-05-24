@@ -110,28 +110,28 @@ def train(config: dict) -> MBPOAgent:
 
 if __name__ == "__main__":
     config = {
-        "env_id": "Hopper-v4",
-        "total_steps": 300_000,
-        "random_steps": 5_000,
+        "env_id": "Pendulum-v1",
+        "total_steps": 50_000,     # 縮短加快完成
+        "random_steps": 1_000,
         "hidden_dim": 256,
-        "ensemble_members": 7,
-        "n_elite": 5,
-        "rollout_length": 1,        # 隨訓練過程增加（未顯示排程邏輯）
-        "rollout_batch_size": 400,  # 每次模型訓練時的分支狀態數量
-        "real_ratio": 0.05,
+        "ensemble_members": 3,
+        "n_elite": 2,
+        "rollout_length": 1,
+        "rollout_batch_size": 200,
+        "real_ratio": 0.3,         # 修正：0.05→0.3，避免 Q 值爆炸
         "gamma": 0.99,
         "tau": 0.005,
-        "lr": 3e-4,
+        "lr": 1e-4,                # 修正：3e-4→1e-4，穩定 SAC 更新
         "model_lr": 1e-3,
         "real_buffer_size": 100_000,
-        "model_buffer_size": 400_000,
+        "model_buffer_size": 100_000,
         "batch_size": 256,
         "model_train_freq": 250,
-        "model_epochs": 5,
-        "sac_updates_per_step": 20,
-        "log_freq": 1000,
+        "model_epochs": 3,         # 修正：5→3，減少過擬合
+        "sac_updates_per_step": 5, # 修正：10→5，減少積累誤差
+        "log_freq": 2_000,
         "eval_freq": 10_000,
-        "save_freq": 50_000,
+        "save_freq": 25_000,
         "device": "cuda" if __import__("torch").cuda.is_available() else "cpu",
     }
     train(config)

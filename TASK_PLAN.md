@@ -1,6 +1,6 @@
 # RL 專案任務計畫書
 
-最後更新：2026-05-24（新增 MAPPO/CQL/IQL 訓練記錄）
+最後更新：2026-05-24（新增 MBPO/World Models 訓練記錄；CQL 更新至完整 200k 步）
 
 ---
 
@@ -266,13 +266,15 @@ C:\Users\666\Desktop\RL\venv\Scripts\python.exe train.py
 | 04 | TD3 | Pendulum -119.8 | ✅ |
 | 04 | SAC | Pendulum -171.8 + LunarLanderCont. 262.4 | ✅ |
 | 05 | Dreamer | Pendulum -836（示範用）| ✅ |
+| 05 | World Models | CarRacing-v3 VAE+MDN-RNN+CMA-ES，控制器 42.5（30 代，CPU demo）| ✅ |
 | 05 | MuZero | CartPole ~9（MCTS 展示用）| ✅ |
+| 05 | MBPO | Pendulum-v1 50k 步，eval -1480（SAC 穩定但未收斂；修復 Q 爆炸問題）| ✅ |
 | 06 | ICM | MountainCar -145.2（成功登頂）| ✅ |
 | 06 | C51 | CartPole 峰值 372.0 | ✅ |
 | 06 | HER | FetchReach-v4 100%（Epoch 160 首達，400–500 全部 100%，完全收斂）| ✅ |
 | 06 | MADDPG | 峰值 -2.04（ep 41800），50k ep 完整完成 | ✅ |
 | 06 | MAPPO | SimpleCoopEnv 平均獎勵 ~-89，500k 步完整完成（2026-05-24）| ✅ |
-| 06 | CQL | HalfCheetah 隨機資料集，eval 1733（100k 步，進程中斷）| ✅ |
+| 06 | CQL | HalfCheetah 隨機資料集，峰值 1733（100k 步），200k 步完整完成（2026-05-24）| ✅ |
 | 06 | IQL | HalfCheetah 隨機資料集，峰值 530.2（150k），200k 步完整完成（2026-05-24）| ✅ |
 | 07 | RLHF/InstructGPT | SFT 損失 12.24，PPO 平均獎勵 -17.5 | ✅ |
 | 07 | DPO | 準確率 ~50%（合成基線） | ✅ |

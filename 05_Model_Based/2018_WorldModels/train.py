@@ -309,30 +309,30 @@ def train(config: dict) -> WorldModelsAgent:
 
 if __name__ == "__main__":
     config = {
-        "env_id": "CarRacing-v2",
+        "env_id": "CarRacing-v3",  # CarRacing-v2 已棄用，改用 v3
         "obs_channels": 3,
         "img_size": 64,
         "latent_dim": 32,
         "hidden_dim": 256,
         "action_dim": 3,
         "n_mixtures": 5,
-        # Phase 1
-        "n_random_episodes": 100,
+        # Phase 1 — CPU demo：100 episodes → 10
+        "n_random_episodes": 10,
         "vae_epochs": 10,
         "vae_batch_size": 32,
         "vae_lr": 1e-4,
         "kl_weight": 1.0,
-        # Phase 2
+        # Phase 2 — CPU demo：縮短 epochs
         "rnn_epochs": 10,
         "rnn_batch_size": 16,
         "rnn_seq_len": 32,
         "rnn_lr": 1e-4,
-        # Phase 3
-        "cmaes_generations": 100,
-        "cmaes_popsize": 16,
+        # Phase 3 — CPU demo：100 generations → 30, popsize 16 → 8
+        "cmaes_generations": 30,
+        "cmaes_popsize": 8,
         "cmaes_sigma": 0.1,
-        "eval_rollouts": 4,
-        "max_steps": 1000,
+        "eval_rollouts": 2,        # CPU demo：4 → 2
+        "max_steps": 300,          # CPU demo：1000 → 300
         "device": "cuda" if __import__("torch").cuda.is_available() else "cpu",
     }
     train(config)
