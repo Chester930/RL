@@ -1,6 +1,6 @@
 # RL 專案任務計畫書
 
-最後更新：2026-05-25（新增任務 F：全專案品質審查後續；同步 Task E 進度）
+最後更新：2026-05-25（MBPO 第三次重跑完成；Task F F-3 完成；Task E 全結案）
 
 ---
 
@@ -294,14 +294,14 @@ C:\Users\666\Desktop\RL\venv\Scripts\python.exe train.py
 | TRPO | ✅ 完成 | 峰值 245.7（ep350），best_checkpoint 已儲存 |
 | Dreamer | ✅ 完成 | state-based 重跑，-868.2（500 ep）|
 | **MBPO** | ✅ **完成** | 104k 步（關機中止），最佳 eval **-1323.2**（step 80k），較第二次提升 10.6% |
-| World Models | ⬜ 待決策 | 接受現況（42.5）或重跑（~6 小時）|
+| World Models | ⬜ 待決策 | 接受現況（42.5）→ 補充 CPU 限制說明（F-6）|
 
 ### 詳細說明
 
 | 演算法 | 目前結果 | 問題 | 處置方式 |
 |---|---|---|---|
 | ✅ MuZero | ~9（隨機基線）| 結構性：policy target 為隨機 one-hot，非 MCTS 造訪次數 | 教學定位調整為「骨架架構展示」，不再重跑 |
-| 🔄 MBPO | -1480 → 重跑中 | 模型誤差累積；rollout_length 固定；50k 步不足 | 150k 步 + rollout 排程 + real_ratio=0.5 + grad clipping |
+| ✅ MBPO | 最佳 **-1323.2**（step 80k，104k 步中止）| 原 rollout 固定 + 50k 不足 | 150k 步 + rollout 排程 1→5 + real_ratio=0.5 + grad clipping |
 | ✅ Dreamer | -868.2（500 ep）| 原 100 集太少；image-based 效率差 | 已改 state-based，重跑完成 |
 | ⬜ World Models | 42.5（CPU demo）| 10 集資料 + 30 代 CMA-ES 嚴重不足 | 建議接受現況，補充「CPU 計算限制」說明 |
 | ✅ TRPO | 峰值 245.7 | line search bug | 修正後重跑完成 |
@@ -363,11 +363,9 @@ Select-String -Path "C:\Users\666\Desktop\RL\COURSE_OUTLINE.md" -Pattern "Meta|H
 
 ---
 
-#### F-3：MBPO training_log 更新（等重跑完成）⬜ → 等待中
+#### F-3：MBPO training_log 更新 ✅ 已完成（2026-05-25）
 
-**問題**：training_log.md 記載的是舊的 50k 步結果。新的 150k 步重跑完成後需更新。
-
-**完成標準**：training_log.md 含新配置、每 10k 步 eval 回報、rollout_length 排程效果說明。
+**結果**：training_log.md 已更新，含三次訓練對比、每 10k 步 eval、rollout_length 排程效果分析。最佳 eval -1323.2（step 80k）。
 
 ---
 
