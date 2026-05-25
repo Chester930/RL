@@ -1,0 +1,84 @@
+[Logger] TensorBoard logs -> runs\dreamer_state_Pendulum-v1
+[Logger] Run: tensorboard --logdir runs
+State-based Dreamer 重跑：Pendulum-v1，500 集
+  state_dim=3, action_dim=1, action_scale=2.0
+[Ep    10 | Step     2000] Return: -1589.50  Length:   200
+[Ep    20 | Step     4000] Return: -1688.76  Length:   200
+Episode    25 | Step     5000 | Eval: -1237.4 ± 218.2
+  ** 新最佳 -1237.4，已儲存 checkpoint **
+[Ep    30 | Step     6000] Return: -1102.83  Length:   200
+[Ep    40 | Step     8000] Return: -1214.11  Length:   200
+[Ep    50 | Step    10000] Return:  -885.52  Length:   200
+Episode    50 | Step    10000 | Eval: -1215.7 ± 190.4
+  ** 新最佳 -1215.7，已儲存 checkpoint **
+[Ep    60 | Step    12000] Return: -1424.79  Length:   200
+[Ep    70 | Step    14000] Return: -1179.75  Length:   200
+Episode    75 | Step    15000 | Eval: -1105.7 ± 238.7
+  ** 新最佳 -1105.7，已儲存 checkpoint **
+[Ep    80 | Step    16000] Return: -1303.56  Length:   200
+[Ep    90 | Step    18000] Return: -1226.56  Length:   200
+[Ep   100 | Step    20000] Return: -1155.45  Length:   200
+Episode   100 | Step    20000 | Eval: -1142.5 ± 188.0
+[Ep   110 | Step    22000] Return: -1507.26  Length:   200
+[Ep   120 | Step    24000] Return: -1290.28  Length:   200
+Episode   125 | Step    25000 | Eval: -1300.5 ± 68.5
+[Ep   130 | Step    26000] Return: -1290.90  Length:   200
+[Ep   140 | Step    28000] Return: -1306.27  Length:   200
+[Ep   150 | Step    30000] Return: -1520.97  Length:   200
+Episode   150 | Step    30000 | Eval: -1327.1 ± 98.2
+[Ep   160 | Step    32000] Return: -1488.41  Length:   200
+[Ep   170 | Step    34000] Return: -1504.75  Length:   200
+Episode   175 | Step    35000 | Eval: -1146.1 ± 241.4
+[Ep   180 | Step    36000] Return:  -980.46  Length:   200
+[Ep   190 | Step    38000] Return:  -927.07  Length:   200
+[Ep   200 | Step    40000] Return:  -985.66  Length:   200
+Episode   200 | Step    40000 | Eval: -1156.0 ± 162.5
+[Ep   210 | Step    42000] Return: -1089.67  Length:   200
+[Ep   220 | Step    44000] Return: -1107.50  Length:   200
+Episode   225 | Step    45000 | Eval: -1129.0 ± 107.5
+[Ep   230 | Step    46000] Return:  -939.80  Length:   200
+[Ep   240 | Step    48000] Return: -1499.43  Length:   200
+[Ep   250 | Step    50000] Return: -1245.34  Length:   200
+Episode   250 | Step    50000 | Eval: -1315.2 ± 212.0
+[Ep   260 | Step    52000] Return: -1053.43  Length:   200
+[Ep   270 | Step    54000] Return: -1424.60  Length:   200
+Episode   275 | Step    55000 | Eval: -1114.3 ± 73.0
+[Ep   280 | Step    56000] Return: -1376.54  Length:   200
+[Ep   290 | Step    58000] Return: -1194.67  Length:   200
+[Ep   300 | Step    60000] Return:  -932.38  Length:   200
+Episode   300 | Step    60000 | Eval: -1085.0 ± 182.1
+  ** 新最佳 -1085.0，已儲存 checkpoint **
+[Ep   310 | Step    62000] Return:  -814.11  Length:   200
+[Ep   320 | Step    64000] Return:  -808.58  Length:   200
+Episode   325 | Step    65000 | Eval: -1006.8 ± 74.5
+  ** 新最佳 -1006.8，已儲存 checkpoint **
+[Ep   330 | Step    66000] Return:  -809.33  Length:   200
+[Ep   340 | Step    68000] Return: -1155.23  Length:   200
+[Ep   350 | Step    70000] Return:  -967.34  Length:   200
+Episode   350 | Step    70000 | Eval: -965.3 ± 195.7
+  ** 新最佳 -965.3，已儲存 checkpoint **
+[Ep   360 | Step    72000] Return: -1511.52  Length:   200
+[Ep   370 | Step    74000] Return:  -908.63  Length:   200
+Episode   375 | Step    75000 | Eval: -1071.2 ± 219.5
+[Ep   380 | Step    76000] Return: -1065.62  Length:   200
+[Ep   390 | Step    78000] Return: -1069.10  Length:   200
+[Ep   400 | Step    80000] Return:  -813.66  Length:   200
+Episode   400 | Step    80000 | Eval: -1044.2 ± 70.9
+[Ep   410 | Step    82000] Return: -1336.74  Length:   200
+[Ep   420 | Step    84000] Return:  -924.66  Length:   200
+Episode   425 | Step    85000 | Eval: -1071.8 ± 54.9
+[Ep   430 | Step    86000] Return: -1069.58  Length:   200
+[Ep   440 | Step    88000] Return: -1062.53  Length:   200
+[Ep   450 | Step    90000] Return: -1014.13  Length:   200
+Episode   450 | Step    90000 | Eval: -1078.3 ± 95.1
+[Ep   460 | Step    92000] Return:  -979.66  Length:   200
+[Ep   470 | Step    94000] Return:  -917.54  Length:   200
+Episode   475 | Step    95000 | Eval: -868.2 ± 129.1
+  ** 新最佳 -868.2，已儲存 checkpoint **
+[Ep   480 | Step    96000] Return: -1017.67  Length:   200
+[Ep   490 | Step    98000] Return:  -896.97  Length:   200
+[Ep   500 | Step   100000] Return:  -934.78  Length:   200
+Episode   500 | Step   100000 | Eval: -1022.2 ± 132.7
+[Logger] Closed. Total episodes logged: 500
+
+訓練完成。最佳 eval: -868.2

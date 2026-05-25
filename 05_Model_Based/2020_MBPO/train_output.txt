@@ -1,0 +1,69 @@
+[Logger] TensorBoard logs -> runs\mbpo_Pendulum-v1
+[Logger] Run: tensorboard --logdir runs
+正在 Pendulum-v1 環境上進行 MBPO 訓練，總步數為 150000 步...
+[Ep    10 | Step     2000] Return:  -979.89  Length:   200
+[Ep    20 | Step     4000] Return: -1196.91  Length:   200
+[Ep    30 | Step     6000] Return: -1372.30  Length:   200
+[Ep    40 | Step     8000] Return: -1314.15  Length:   200
+[Ep    50 | Step    10000] Return: -1290.12  Length:   200
+步數 10000: rollout_length 更新為 2
+步數    10000  評估回報: -1571.1 ± 239.8
+[Ep    60 | Step    12000] Return: -1466.15  Length:   200
+[Ep    70 | Step    14000] Return: -1465.07  Length:   200
+[Ep    80 | Step    16000] Return: -1446.68  Length:   200
+[Ep    90 | Step    18000] Return: -1423.82  Length:   200
+[Ep   100 | Step    20000] Return: -1400.46  Length:   200
+步數 20000: rollout_length 更新為 3
+步數    20000  評估回報: -1442.0 ± 66.5
+[Ep   110 | Step    22000] Return: -1349.07  Length:   200
+[Ep   120 | Step    24000] Return: -1461.80  Length:   200
+[Ep   130 | Step    26000] Return: -1427.19  Length:   200
+[Ep   140 | Step    28000] Return: -1432.76  Length:   200
+[Ep   150 | Step    30000] Return: -1500.31  Length:   200
+步數 30000: rollout_length 更新為 4
+步數    30000  評估回報: -1509.7 ± 204.6
+[Ep   160 | Step    32000] Return: -1399.38  Length:   200
+[Ep   170 | Step    34000] Return: -1473.60  Length:   200
+[Ep   180 | Step    36000] Return: -1436.49  Length:   200
+[Ep   190 | Step    38000] Return: -1488.21  Length:   200
+[Ep   200 | Step    40000] Return: -1921.00  Length:   200
+步數 40000: rollout_length 更新為 5
+步數    40000  評估回報: -1525.0 ± 195.4
+[Ep   210 | Step    42000] Return: -1338.62  Length:   200
+[Ep   220 | Step    44000] Return: -1900.11  Length:   200
+[Ep   230 | Step    46000] Return: -1902.81  Length:   200
+[Ep   240 | Step    48000] Return: -1471.33  Length:   200
+[Ep   250 | Step    50000] Return: -1390.85  Length:   200
+步數    50000  評估回報: -1605.3 ± 256.9
+[Ep   260 | Step    52000] Return: -1247.05  Length:   200
+[Ep   270 | Step    54000] Return: -1443.69  Length:   200
+[Ep   280 | Step    56000] Return: -1377.66  Length:   200
+[Ep   290 | Step    58000] Return: -1354.69  Length:   200
+[Ep   300 | Step    60000] Return: -1434.69  Length:   200
+步數    60000  評估回報: -1415.3 ± 70.7
+[Ep   310 | Step    62000] Return: -1388.56  Length:   200
+[Ep   320 | Step    64000] Return: -1396.56  Length:   200
+[Ep   330 | Step    66000] Return: -1314.70  Length:   200
+[Ep   340 | Step    68000] Return: -1829.07  Length:   200
+[Ep   350 | Step    70000] Return: -1347.89  Length:   200
+步數    70000  評估回報: -1476.1 ± 207.9
+[Ep   360 | Step    72000] Return: -1287.64  Length:   200
+[Ep   370 | Step    74000] Return: -1340.79  Length:   200
+[Ep   380 | Step    76000] Return: -1289.03  Length:   200
+[Ep   390 | Step    78000] Return: -1956.88  Length:   200
+[Ep   400 | Step    80000] Return: -1286.57  Length:   200
+步數    80000  評估回報: -1323.2 ± 24.3
+[Ep   410 | Step    82000] Return: -1707.43  Length:   200
+[Ep   420 | Step    84000] Return: -1483.83  Length:   200
+[Ep   430 | Step    86000] Return: -1432.45  Length:   200
+[Ep   440 | Step    88000] Return: -1252.00  Length:   200
+[Ep   450 | Step    90000] Return: -1446.92  Length:   200
+步數    90000  評估回報: -1398.2 ± 123.8
+[Ep   460 | Step    92000] Return: -1481.44  Length:   200
+[Ep   470 | Step    94000] Return: -1394.18  Length:   200
+[Ep   480 | Step    96000] Return: -1419.83  Length:   200
+[Ep   490 | Step    98000] Return: -1347.23  Length:   200
+[Ep   500 | Step   100000] Return: -1404.55  Length:   200
+步數   100000  評估回報: -1410.8 ± 188.7
+[Ep   510 | Step   102000] Return: -1268.52  Length:   200
+[Ep   520 | Step   104000] Return: -1380.93  Length:   200

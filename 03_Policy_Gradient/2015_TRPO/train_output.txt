@@ -1,0 +1,128 @@
+[Logger] TensorBoard logs -> runs\trpo_CartPole-v1
+[Logger] Run: tensorboard --logdir runs
+TRPO 重跑：max_kl=0.05, n_episodes=1000
+[Ep    10 | Step      185] Return:    11.00  Length:    11
+[Ep    20 | Step      286] Return:     9.00  Length:     9
+[Ep    30 | Step      381] Return:     8.00  Length:     8
+[Ep    40 | Step      478] Return:     9.00  Length:     9
+[Ep    50 | Step      583] Return:    12.00  Length:    12
+Episode    50 | Step      583 | Eval: 10.5 ± 1.2
+  ** 新最佳 10.5，已儲存 checkpoint **
+[Ep    60 | Step      704] Return:    13.00  Length:    13
+[Ep    70 | Step      812] Return:    12.00  Length:    12
+[Ep    80 | Step      912] Return:    10.00  Length:    10
+[Ep    90 | Step     1017] Return:    12.00  Length:    12
+[Ep   100 | Step     1124] Return:    10.00  Length:    10
+Episode   100 | Step     1124 | Eval: 9.3 ± 0.9
+[Ep   110 | Step     1222] Return:     9.00  Length:     9
+[Ep   120 | Step     1376] Return:    11.00  Length:    11
+[Ep   130 | Step     1478] Return:     8.00  Length:     8
+[Ep   140 | Step     1581] Return:    10.00  Length:    10
+[Ep   150 | Step     1842] Return:    61.00  Length:    61
+Episode   150 | Step     1842 | Eval: 65.2 ± 5.3
+  ** 新最佳 65.2，已儲存 checkpoint **
+[Ep   160 | Step     2418] Return:    54.00  Length:    54
+[Ep   170 | Step     3265] Return:    53.00  Length:    53
+[Ep   180 | Step     3814] Return:    80.00  Length:    80
+[Ep   190 | Step     4314] Return:   121.00  Length:   121
+[Ep   200 | Step     5161] Return:    40.00  Length:    40
+Episode   200 | Step     5161 | Eval: 24.6 ± 15.6
+[Ep   210 | Step     5573] Return:    94.00  Length:    94
+[Ep   220 | Step     6923] Return:   178.00  Length:   178
+[Ep   230 | Step     8595] Return:   168.00  Length:   168
+[Ep   240 | Step    10070] Return:    40.00  Length:    40
+[Ep   250 | Step    10868] Return:    15.00  Length:    15
+Episode   250 | Step    10868 | Eval: 13.8 ± 1.4
+[Ep   260 | Step    11005] Return:    11.00  Length:    11
+[Ep   270 | Step    11178] Return:    27.00  Length:    27
+[Ep   280 | Step    11412] Return:    25.00  Length:    25
+[Ep   290 | Step    11610] Return:    10.00  Length:    10
+[Ep   300 | Step    11714] Return:    11.00  Length:    11
+Episode   300 | Step    11714 | Eval: 9.7 ± 0.9
+[Ep   310 | Step    11812] Return:    10.00  Length:    10
+[Ep   320 | Step    11909] Return:    10.00  Length:    10
+[Ep   330 | Step    12002] Return:     9.00  Length:     9
+[Ep   340 | Step    12098] Return:    10.00  Length:    10
+[Ep   350 | Step    12190] Return:     9.00  Length:     9
+Episode   350 | Step    12190 | Eval: 10.1 ± 0.3
+[Ep   360 | Step    12282] Return:    11.00  Length:    11
+[Ep   370 | Step    12374] Return:     9.00  Length:     9
+[Ep   380 | Step    12470] Return:    10.00  Length:    10
+[Ep   390 | Step    12560] Return:     8.00  Length:     8
+[Ep   400 | Step    12652] Return:    10.00  Length:    10
+Episode   400 | Step    12652 | Eval: 9.2 ± 0.6
+[Ep   410 | Step    12746] Return:     9.00  Length:     9
+[Ep   420 | Step    12838] Return:    10.00  Length:    10
+[Ep   430 | Step    12928] Return:     8.00  Length:     8
+[Ep   440 | Step    13018] Return:     9.00  Length:     9
+[Ep   450 | Step    13110] Return:     9.00  Length:     9
+Episode   450 | Step    13110 | Eval: 8.9 ± 0.7
+[Ep   460 | Step    13200] Return:     8.00  Length:     8
+[Ep   470 | Step    13292] Return:     9.00  Length:     9
+[Ep   480 | Step    13386] Return:     9.00  Length:     9
+[Ep   490 | Step    13475] Return:    10.00  Length:    10
+[Ep   500 | Step    13568] Return:     8.00  Length:     8
+Episode   500 | Step    13568 | Eval: 9.2 ± 1.0
+[Ep   510 | Step    13663] Return:    10.00  Length:    10
+[Ep   520 | Step    13758] Return:    10.00  Length:    10
+[Ep   530 | Step    13852] Return:     9.00  Length:     9
+[Ep   540 | Step    13944] Return:     9.00  Length:     9
+[Ep   550 | Step    14040] Return:    10.00  Length:    10
+Episode   550 | Step    14040 | Eval: 9.5 ± 0.7
+[Ep   560 | Step    14134] Return:     9.00  Length:     9
+[Ep   570 | Step    14228] Return:    10.00  Length:    10
+[Ep   580 | Step    14322] Return:     9.00  Length:     9
+[Ep   590 | Step    14410] Return:     9.00  Length:     9
+[Ep   600 | Step    14506] Return:     9.00  Length:     9
+Episode   600 | Step    14506 | Eval: 9.3 ± 0.6
+[Ep   610 | Step    14601] Return:    10.00  Length:    10
+[Ep   620 | Step    14693] Return:    10.00  Length:    10
+[Ep   630 | Step    14788] Return:    10.00  Length:    10
+[Ep   640 | Step    14884] Return:     9.00  Length:     9
+[Ep   650 | Step    14978] Return:    10.00  Length:    10
+Episode   650 | Step    14978 | Eval: 9.5 ± 0.5
+[Ep   660 | Step    15077] Return:     9.00  Length:     9
+[Ep   670 | Step    15171] Return:    10.00  Length:    10
+[Ep   680 | Step    15266] Return:    10.00  Length:    10
+[Ep   690 | Step    15358] Return:     8.00  Length:     8
+[Ep   700 | Step    15448] Return:     9.00  Length:     9
+Episode   700 | Step    15448 | Eval: 9.4 ± 0.7
+[Ep   710 | Step    15541] Return:     9.00  Length:     9
+[Ep   720 | Step    15634] Return:     9.00  Length:     9
+[Ep   730 | Step    15729] Return:    10.00  Length:    10
+[Ep   740 | Step    15823] Return:     9.00  Length:     9
+[Ep   750 | Step    15911] Return:    10.00  Length:    10
+Episode   750 | Step    15911 | Eval: 9.2 ± 0.7
+[Ep   760 | Step    16005] Return:    10.00  Length:    10
+[Ep   770 | Step    16100] Return:     8.00  Length:     8
+[Ep   780 | Step    16197] Return:    10.00  Length:    10
+[Ep   790 | Step    16294] Return:     9.00  Length:     9
+[Ep   800 | Step    16386] Return:    10.00  Length:    10
+Episode   800 | Step    16386 | Eval: 9.4 ± 0.5
+[Ep   810 | Step    16483] Return:    10.00  Length:    10
+[Ep   820 | Step    16577] Return:    10.00  Length:    10
+[Ep   830 | Step    16671] Return:     9.00  Length:     9
+[Ep   840 | Step    16761] Return:    10.00  Length:    10
+[Ep   850 | Step    16854] Return:    10.00  Length:    10
+Episode   850 | Step    16854 | Eval: 9.5 ± 0.7
+[Ep   860 | Step    16948] Return:    10.00  Length:    10
+[Ep   870 | Step    17044] Return:     9.00  Length:     9
+[Ep   880 | Step    17137] Return:    11.00  Length:    11
+[Ep   890 | Step    17229] Return:    10.00  Length:    10
+[Ep   900 | Step    17318] Return:     9.00  Length:     9
+Episode   900 | Step    17318 | Eval: 9.2 ± 0.7
+[Ep   910 | Step    17411] Return:     8.00  Length:     8
+[Ep   920 | Step    17506] Return:     8.00  Length:     8
+[Ep   930 | Step    17596] Return:     9.00  Length:     9
+[Ep   940 | Step    17686] Return:    10.00  Length:    10
+[Ep   950 | Step    17780] Return:     9.00  Length:     9
+Episode   950 | Step    17780 | Eval: 9.4 ± 0.5
+[Ep   960 | Step    17877] Return:     9.00  Length:     9
+[Ep   970 | Step    17967] Return:     8.00  Length:     8
+[Ep   980 | Step    18057] Return:     9.00  Length:     9
+[Ep   990 | Step    18154] Return:     9.00  Length:     9
+[Ep  1000 | Step    18248] Return:    10.00  Length:    10
+Episode  1000 | Step    18248 | Eval: 9.5 ± 0.8
+[Logger] Closed. Total episodes logged: 1000
+
+訓練完成。最佳 eval: 65.2
