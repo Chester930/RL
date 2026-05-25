@@ -1,6 +1,6 @@
 # RL 專案任務計畫書
 
-最後更新：2026-05-24（新增任務 E：品質不佳演算法重跑清單；A2C VecEnv 調參成功 500 分）
+最後更新：2026-05-25（新增任務 F：全專案品質審查後續；同步 Task E 進度）
 
 ---
 
@@ -227,7 +227,7 @@ env = gym.make("FetchReach-v3")  # obs 含 achieved_goal / desired_goal
 |---|---|---|---|
 | ✅ 完成 | MADDPG | 50k ep 重跑，峰值 -2.04（ep 41800），較初跑 -3.77 提升 46% | — |
 | ✅ 完成 | HER | 500 ep 重跑，400–500 ep 全部 100%，完全收斂 | — |
-| 🟡 中 | Dreamer | 最終 -836 僅示範用，world model 未真正學習 | 延長至 500 ep；修正 RSSM latent dim |
+| ✅ 完成 | **Dreamer** | State-based 重跑（2026-05-25）500 ep，最佳 **-868.2**（ep475）；學習趨勢：-1237→-868；best_checkpoint 已儲存 | CNN→MLP encoder/decoder；seed_steps 5000→1000；update_every 20×4 |
 | 🟡 中 | MuZero | 回報 ~9 為隨機基線，MCTS simulation 極少 | num_simulations: 提高；CartPole 跑更多集 |
 | 🟢 低 | A2C | CartPole 單環境不穩定（357.5） | 改用 4 平行環境（VecEnv）|
 
@@ -261,14 +261,14 @@ C:\Users\666\Desktop\RL\venv\Scripts\python.exe train.py
 | 03 | REINFORCE | eval=9.5（高方差，符合教學目的）| ✅ |
 | 03 | PPO | CartPole 500 + LunarLander 283.9 | ✅ |
 | 03 | A2C | VecEnv 4envs 調參版，300k 步，最終 **500.0 ± 0.0**（2026-05-24）| ✅ |
-| 03 | TRPO | CartPole 峰值 433.0 | ✅ |
+| 03 | TRPO | CartPole 峰值 245.7（重跑 2026-05-24，1000 ep，修正 line search bug）| ✅ |
 | 04 | DDPG | Pendulum -101.6 | ✅ |
 | 04 | TD3 | Pendulum -119.8 | ✅ |
 | 04 | SAC | Pendulum -171.8 + LunarLanderCont. 262.4 | ✅ |
-| 05 | Dreamer | Pendulum -836（示範用）| ✅ |
+| 05 | Dreamer | Pendulum -868.2（state-based 重跑 2026-05-25，500 ep，有學習趨勢）| ✅ |
 | 05 | World Models | CarRacing-v3 VAE+MDN-RNN+CMA-ES，控制器 42.5（30 代，CPU demo）| ✅ |
-| 05 | MuZero | CartPole ~9（MCTS 展示用）| ✅ |
-| 05 | MBPO | Pendulum-v1 50k 步，eval -1480（SAC 穩定但未收斂；修復 Q 爆炸問題）| ✅ |
+| 05 | MuZero | CartPole ~9（骨架架構展示；3000 集重跑確認為結構性限制，非超參數問題）| ✅ |
+| 05 | MBPO | Pendulum 104k 步（關機中止），最佳 eval **-1323.2**（step 80k），較第二次 -1480.6 提升 10.6% | ✅ |
 | 06 | ICM | MountainCar -145.2（成功登頂）| ✅ |
 | 06 | C51 | CartPole 峰值 372.0 | ✅ |
 | 06 | HER | FetchReach-v4 100%（Epoch 160 首達，400–500 全部 100%，完全收斂）| ✅ |
@@ -286,44 +286,267 @@ C:\Users\666\Desktop\RL\venv\Scripts\python.exe train.py
 
 > 全專案品質審查（2026-05-24），以下演算法結果不符合教學展示標準，建議重跑。
 
-### ❌ 優先級 1：結果為隨機基線，演算法未真正學習
+### 進度快照（2026-05-25 更新）
 
-| 演算法 | 目前結果 | 問題 | 建議修改 | 預估時間 |
-|---|---|---|---|---|
-| **MuZero** | CartPole ~9（隨機基線）| num_simulations 過少，MCTS 幾乎等同隨機決策 | num_simulations: 5→50；total_episodes: 500→3000 | ~2–3 小時 |
-| **MBPO** | Pendulum eval -1480（接近隨機 -1600）| 模型誤差太大，SAC 批次仍有 70% 錯誤模型資料 | rollout_length 排程 1→5（每 10k 步 +1）；total_steps: 50k→150k；或改用 HalfCheetah（動態更平滑）| ~3 小時 |
+| 演算法 | 狀態 | 結果 |
+|---|---|---|
+| MuZero | ✅ 結案 | 骨架展示（結構性限制，不再重跑）|
+| TRPO | ✅ 完成 | 峰值 245.7（ep350），best_checkpoint 已儲存 |
+| Dreamer | ✅ 完成 | state-based 重跑，-868.2（500 ep）|
+| **MBPO** | ✅ **完成** | 104k 步（關機中止），最佳 eval **-1323.2**（step 80k），較第二次提升 10.6% |
+| World Models | ⬜ 待決策 | 接受現況（42.5）或重跑（~6 小時）|
 
-### 🟡 優先級 2：有學習但受資料量/計算限制，遠低於論文水準
+### 詳細說明
 
-| 演算法 | 目前結果 | 問題 | 建議修改 | 預估時間 |
-|---|---|---|---|---|
-| **Dreamer** | Pendulum -836（示範用；好策略應達 -200）| 100 集太少；image-based 在 Pendulum 上效率差 | 改用 state-based（移除渲染）；episodes: 100→500 | ~2 小時 |
-| **World Models** | CarRacing 42.5（論文 ~900）| 僅 10 集資料 + 30 代 CMA-ES，嚴重不足 | n_random_episodes: 10→100；cmaes_generations: 30→200 | ~6 小時 |
-
-### 🟢 優先級 3：有收斂但峰值後不穩定，可視需求重跑
-
-| 演算法 | 目前結果 | 問題 | 建議修改 | 預估時間 |
-|---|---|---|---|---|
-| **TRPO** | 峰值 433，最終 199（崩潰）| KL 限制過緊，後期拒絕所有更新導致停滯 | delta: 0.01→0.05；n_episodes: 500→1000 | ~30 分鐘 |
-| **A3C** | eval 33-54（單執行緒失敗）| 已知問題（教學反例）；無多工作者多樣性 | 保留現況作為反例，或加入真正 VecEnv 多工作者版本 | — |
+| 演算法 | 目前結果 | 問題 | 處置方式 |
+|---|---|---|---|
+| ✅ MuZero | ~9（隨機基線）| 結構性：policy target 為隨機 one-hot，非 MCTS 造訪次數 | 教學定位調整為「骨架架構展示」，不再重跑 |
+| 🔄 MBPO | -1480 → 重跑中 | 模型誤差累積；rollout_length 固定；50k 步不足 | 150k 步 + rollout 排程 + real_ratio=0.5 + grad clipping |
+| ✅ Dreamer | -868.2（500 ep）| 原 100 集太少；image-based 效率差 | 已改 state-based，重跑完成 |
+| ⬜ World Models | 42.5（CPU demo）| 10 集資料 + 30 代 CMA-ES 嚴重不足 | 建議接受現況，補充「CPU 計算限制」說明 |
+| ✅ TRPO | 峰值 245.7 | line search bug | 修正後重跑完成 |
+| — A3C | eval 33-54 | 單執行緒，無多工作者多樣性 | 保留為教學反例，不重跑 |
 
 ### 可接受現況（不需重跑）
 
 | 演算法 | 說明 |
 |---|---|
-| CQL / IQL | 使用隨機資料集，非真實 D4RL（需 MuJoCo 授權）；結果合理 |
+| CQL / IQL | 使用隨機資料集，非真實 D4RL；結果合理 |
 | MAPPO | 合作環境本身獎勵稀疏（-89 合理），非演算法問題 |
 | RLHF / DPO / GRPO | 合成資料集，展示演算法流程為主，非性能指標 |
 
-### 建議執行順序
+---
 
+## 任務 F：全專案品質審查後續（2026-05-25）
+
+> 全專案審查發現以下問題，依優先順序排列。可依當下時間與目標選擇執行。
+
+---
+
+### 🔴 P1：快速修復（每項 < 30 分鐘，影響立即可見）
+
+#### F-1：確認課程大綱的 08/09/10 範圍 ⬜
+
+**問題**：`08_Meta_RL`、`09_Hierarchical_RL`、`10_Safe_RL` 三個目錄只有 README，無任何程式碼或訓練記錄。若課程大綱提到這些演算法，學生找不到對應實作。
+
+**處置選項**：
+- 選項 A（建議）：在各 README 頂部加「⚠️ 本演算法尚未實作，作為延伸閱讀參考」
+- 選項 B：從 COURSE_OUTLINE.md 移除這三章
+
+**指令**：
+```powershell
+# 確認 COURSE_OUTLINE.md 是否涵蓋這些章節
+Select-String -Path "C:\Users\666\Desktop\RL\COURSE_OUTLINE.md" -Pattern "Meta|Hierarchical|Safe"
 ```
-Day 1（明天）
-  Step 1：MuZero 重跑（~3 小時）— 結果最差，修改最直接
-  Step 2：TRPO 重跑（~30 分鐘）— 快速完成
-  Step 3：Dreamer 重跑（~2 小時）— state-based 簡化版
 
-Day 2（後天，若需要）
-  Step 4：MBPO 重跑（~3 小時）— 視 Day 1 結果決定
-  Step 5：World Models（~6 小時）— 時間最長，視需求
+**完成標準**：COURSE_OUTLINE.md 與實際目錄狀態一致，無空白章節。
+
+---
+
+#### F-2：C51 支撐集修正 ⬜
+
+**問題**：`v_min=-10, v_max=10`，但 CartPole 最高回報為 500。所有 >10 的回報被截斷，分佈學習無效。
+
+**修改**：`06_Advanced_Specialized/2021_C51_DistRL/train.py`
+```python
+# 改前
+"v_min": -10,
+"v_max": 10,
+# 改後
+"v_min": 0,
+"v_max": 500,
+```
+
+**完成標準**：改完後重跑 100k 步，eval 應比目前 372.0 更穩定（峰值後不崩潰）。
+
+**預估時間**：改參數 5 分鐘 + 重跑 ~2 小時
+
+---
+
+#### F-3：MBPO training_log 更新（等重跑完成）⬜ → 等待中
+
+**問題**：training_log.md 記載的是舊的 50k 步結果。新的 150k 步重跑完成後需更新。
+
+**完成標準**：training_log.md 含新配置、每 10k 步 eval 回報、rollout_length 排程效果說明。
+
+---
+
+### 🟡 P2：重要改善（每項 1~4 小時）
+
+#### F-4：全部演算法加隨機種子 ⬜
+
+**問題**：幾乎所有 train.py 無 `np.random.seed()` + `torch.manual_seed()`，結果不可重現、訓練曲線高方差。
+
+**修改模板**（加在 `train()` 函式最前面）：
+```python
+import random
+seed = config.get("seed", 42)
+random.seed(seed)
+np.random.seed(seed)
+torch.manual_seed(seed)
+torch.backends.cudnn.deterministic = True
+```
+
+**影響範圍**：所有 00–07 的 train.py（約 25 個檔案）
+
+**完成標準**：每個 train.py 的 config 有 `"seed": 42`，train() 開頭有種子設置。
+
+---
+
+#### F-5：全部演算法加最佳 checkpoint 自動儲存 ⬜
+
+**問題**：大多數只存固定步數 checkpoint。若訓練在峰值後崩潰，無法取回最好的模型（目前只有 DQN 系列有 `best_checkpoints/`）。
+
+**修改模板**（加在評估迴圈中）：
+```python
+if mean_r > best_return:
+    best_return = mean_r
+    agent.save("checkpoints/best")
+    print(f"  ★ 新最佳：{mean_r:.1f}，已儲存")
+```
+
+**影響範圍**：03/04/05/06 底下所有有 eval 的 train.py
+
+**完成標準**：每個演算法的 checkpoints/ 下有 best/ 子目錄。
+
+---
+
+#### F-6：World Models 接受現況並補充說明 ⬜
+
+**問題**：CarRacing 42.5（論文 ~900），差距巨大。但問題是算力（CPU 限制），不是程式碼錯誤。
+
+**處置（不重跑）**：在 `05_Model_Based/2018_WorldModels/training_log.md` 補充：
+- 明確說明 CPU 限制（10 集 VAE 資料、30 代 CMA-ES）
+- 論文結果需要 GPU + 10,000 集 + 1,000 代
+- 教學價值：展示 VAE + MDN-RNN + CMA-ES 三階段架構
+
+**完成標準**：training_log.md 有完整的「與論文差距原因」說明。
+
+---
+
+#### F-7：CQL 超參調整 ⬜
+
+**問題**：`cql_alpha=5.0` 過度保守，訓練後期 actor_loss 轉正（+15.75），評估回報從峰值 1733 下降到 1189。
+
+**修改**：`06_Advanced_Specialized/2020_CQL/train.py`
+```python
+# 改前
+"cql_alpha": 5.0,
+# 改後
+"cql_alpha": 1.0,   # 或啟用 cql_lagrange=True（自動調整）
+```
+
+**完成標準**：重跑後 actor_loss 全程為負，200k 步 eval 不低於峰值的 80%。
+
+**預估時間**：改參數 5 分鐘 + 重跑 ~3 小時
+
+---
+
+#### F-8：補充關鍵演算法的缺失訓練指標 ⬜
+
+**問題**：以下演算法的 training_log 缺少對應演算法特有的診斷指標，降低教學說服力。
+
+| 演算法 | 缺少指標 | 教學意義 |
+|---|---|---|
+| TRPO | 線搜尋成功/失敗次數、KL 大小變化 | 展示「信任區域」真正在約束更新 |
+| SAC | α 的完整下降曲線（每 10k 步）| 展示自動溫度調節 |
+| TD3 | actor/critic 更新頻率比（延遲更新效果）| 展示延遲更新的穩定化作用 |
+| HER | 原始目標 vs hindsight 目標的成功率對比 | 展示 HER 的核心貢獻 |
+| A3C | 各 worker 的分散 eval（非只有平均）| 展示多樣性探索 |
+
+**完成標準**：上述演算法的 training_log.md 各補一段「演算法特有指標」。
+
+---
+
+### 🟢 P3：長期完善（視課程目標決定）
+
+#### F-9：08_Meta_RL 三演算法實作 ⬜
+
+**演算法**：RL²（2016）、MAML（2017）、PEARL（2019）
+
+**難度**：高（需要 meta-learning 訓練基礎設施，RL² 需要 RNN policy）
+
+**建議環境**：
+- RL²：Multi-armed bandit 或 GridWorld
+- MAML：HalfCheetah-Dir（正向/反向跑）
+- PEARL：MetaWorld 或自訂 goal-conditioned 任務
+
+**預估時間**：每個演算法 4~8 小時（含除錯）
+
+---
+
+#### F-10：09_Hierarchical_RL 三演算法實作 ⬜
+
+**演算法**：Options（1999）、FeUdal（2017）、HIRO（2018）
+
+**難度**：高（需要選項框架或目標條件化子策略）
+
+**建議環境**：
+- Options：GridWorld（離散，有明顯子目標）
+- FeUdal / HIRO：AntMaze 或自訂多房間迷宮
+
+---
+
+#### F-11：10_Safe_RL 兩演算法實作 ⬜
+
+**演算法**：CPO（2017）、PPO-Lagrangian（2019）
+
+**難度**：中（需要約束優化，但可基於現有 PPO 修改）
+
+**建議環境**：SafetyGym 或自訂有代價函式的 Pendulum
+
+---
+
+#### F-12：RLHF/DPO/GRPO 加強說明 ⬜
+
+**問題**：合成隨機資料導致模型無法真正學習，RM 損失停在 0.693（隨機基線），展示效果弱。
+
+**處置選項**：
+- 選項 A（低成本）：在各 training_log.md 補充「合成資料框架說明」，明確教學定位
+- 選項 B（高成本）：接入真實偏好資料集（HuggingFace `Anthropic/hh-rlhf` 或 `stanfordnlp/SHP`）
+
+**完成標準**（選項 A）：training_log 有「為何使用合成資料」和「如何用真實資料替換」的說明。
+
+---
+
+#### F-13：訓練異常偵測（全部演算法）⬜
+
+**問題**：無 NaN 檢查或崩潰警告，Q 值爆炸要等很久才發現（如 MBPO 第一次跑到 28k 步才爆炸）。
+
+**修改模板**（加在 SAC/DQN 等的 update() 後）：
+```python
+if np.isnan(metrics.get("critic_loss", 0)):
+    raise RuntimeError(f"NaN loss at step {step}")
+if step > 10_000 and mean_r < best_return * 0.3:
+    print(f"[WARNING] 步數 {step}：eval 崩潰（{mean_r:.1f} vs 峰值 {best_return:.1f}）")
+```
+
+---
+
+### 執行手冊（通用指令模板）
+
+任何演算法重跑時的標準流程：
+
+```powershell
+# 1. 進入目錄
+cd C:\Users\666\Desktop\RL\<章節>\<演算法>
+
+# 2. 清除舊結果（選擇性）
+Remove-Item -Recurse -Force checkpoints, runs -ErrorAction SilentlyContinue
+
+# 3. 啟動訓練（stdout/stderr 分別記錄）
+$proc = Start-Process `
+    -FilePath "C:\Users\666\Desktop\RL\venv\Scripts\python.exe" `
+    -ArgumentList "-u", "train.py" `
+    -WorkingDirectory (Get-Location).Path `
+    -RedirectStandardOutput "train_output.txt" `
+    -RedirectStandardError  "train_err.txt" `
+    -NoNewWindow -PassThru
+Write-Host "PID: $($proc.Id)"
+
+# 4. 監看即時輸出
+Get-Content train_output.txt -Wait -Tail 5
+
+# 5. 確認錯誤
+Get-Content train_err.txt
 ```

@@ -11,10 +11,12 @@ import gymnasium as gym
 
 from agent import MuZeroAgent
 from common.utils.logger import Logger
+from common.utils.evaluator import evaluate
 
 
 def train(config: dict) -> MuZeroAgent:
     env = gym.make(config["env_id"])
+    eval_env = gym.make(config["env_id"])
 
     agent = MuZeroAgent(
         state_dim=env.observation_space.shape[0],
@@ -27,10 +29,10 @@ def train(config: dict) -> MuZeroAgent:
     )
 
     logger = Logger(log_dir="runs", run_name=f"muzero_{config['env_id']}")
+    best_eval = -float("inf")
+    os.makedirs("best_checkpoints", exist_ok=True)
 
-    print("注意：這是一個 MuZero 的骨架實作版本 (Skeleton implementation)。")
-    print("如需完整的實作版本，請參考：")
-    print("  https://github.com/werner-duvaud/muzero-general")
+    print(f"MuZero 重跑：num_simulations={config['num_simulations']}, n_episodes={config['n_episodes']}")
 
     for episode in range(1, config["n_episodes"] + 1):
         obs, _ = env.reset()
@@ -50,29 +52,35 @@ def train(config: dict) -> MuZeroAgent:
             ep_length += 1
             obs = next_obs
 
-        # 儲存完整的對局歷史記錄 (Full game history)
         agent.store(game_history)
-
-        # 訓練更新 (Training update)
         metrics = agent.update()
         logger.log_episode(ep_return, ep_length, episode)
 
-        if episode % 50 == 0:
-            print(f"集數 {episode:5d}  回報: {ep_return:.1f}  緩衝區: {len(agent.replay_buffer)}")
+        if episode % config["eval_freq"] == 0:
+            mean_r, std_r = evaluate(agent, eval_env)
+            logger.log_scalar("eval/mean_return", mean_r, episode)
+            print(f"Episode {episode:5d} | Eval: {mean_r:.1f} ± {std_r:.1f} | Buffer: {len(agent.replay_buffer)}")
+            if mean_r > best_eval:
+                best_eval = mean_r
+                agent.save("best_checkpoints")
+                print(f"  ** 新最佳 {best_eval:.1f}，已儲存 checkpoint **")
 
     logger.close()
     env.close()
+    eval_env.close()
+    print(f"\n訓練完成。最佳 eval: {best_eval:.1f}")
     return agent
 
 
 if __name__ == "__main__":
     config = {
         "env_id": "CartPole-v1",
-        "n_episodes": 500,
+        "n_episodes": 3000,
         "hidden_dim": 64,
         "lr": 1e-3,
-        "num_simulations": 25,
+        "num_simulations": 50,
         "gamma": 0.997,
+        "eval_freq": 100,
         "device": "cuda" if torch.cuda.is_available() else "cpu",
     }
     train(config)

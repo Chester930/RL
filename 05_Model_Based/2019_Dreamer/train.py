@@ -1,4 +1,4 @@
-"""在 DMControl 或 Atari 環境上訓練 Dreamer。"""
+"""在低維狀態環境上訓練 State-based Dreamer（重跑版，2026-05-25）。"""
 
 import sys
 import os
@@ -9,42 +9,39 @@ import numpy as np
 # pyrefly: ignore [missing-import]
 import gymnasium as gym
 
-from agent import DreamerAgent
+from agent import StateDreamerAgent
 from common.utils.logger import Logger
+from common.utils.evaluator import evaluate
 
 
-def train(config: dict) -> DreamerAgent:
-    """
-    Dreamer 訓練迴圈：
-    - 將真實經驗收集至重播緩衝區
-    - 定期執行世界模型與行為訓練更新
-    """
-    # Dreamer 需要畫素觀測影像。為了簡化，此處使用包裝後的環境。
-    # 在實際應用中，請使用具備畫素觀測功能的 dm_control 或 Atari 環境。
-    env = gym.make(config["env_id"], render_mode="rgb_array")
+def train(config: dict) -> StateDreamerAgent:
+    env      = gym.make(config["env_id"])
+    eval_env = gym.make(config["env_id"])
 
-    action_dim = env.action_space.shape[0] if hasattr(env.action_space, 'shape') else env.action_space.n
+    state_dim  = env.observation_space.shape[0]
+    action_dim = env.action_space.shape[0]
+    action_scale = float(env.action_space.high[0])  # Pendulum: 2.0
 
-    agent = DreamerAgent(
-        state_dim=0,  # Dreamer 使用影像，而非攤平的狀態向量 (Flat state)
+    agent = StateDreamerAgent(
+        state_dim=state_dim,
         action_dim=action_dim,
-        obs_channels=config["obs_channels"],
+        action_scale=action_scale,
+        embed_dim=config["embed_dim"],
         deter_dim=config["deter_dim"],
         stoch_dim=config["stoch_dim"],
-        embed_dim=config["embed_dim"],
         gamma=config["gamma"],
         lambda_=config["lambda_"],
         imagine_horizon=config["imagine_horizon"],
         device=config["device"],
     )
 
-    logger = Logger(log_dir="runs", run_name=f"dreamer_{config['env_id']}")
+    logger = Logger(log_dir="runs", run_name=f"dreamer_state_{config['env_id']}")
     global_step = 0
+    best_eval   = -float("inf")
+    os.makedirs("best_checkpoints", exist_ok=True)
 
-    print("注意：這是一個骨架實作版本 (Skeleton implementation)。")
-    print("如需完整的 Dreamer 實作，請參考：")
-    print("  https://github.com/danijar/dreamer")
-    print("  https://github.com/zhaoyi11/dreamer-pytorch")
+    print(f"State-based Dreamer 重跑：{config['env_id']}，{config['n_episodes']} 集")
+    print(f"  state_dim={state_dim}, action_dim={action_dim}, action_scale={action_scale}")
 
     for episode in range(1, config["n_episodes"] + 1):
         obs, _ = env.reset()
@@ -53,59 +50,57 @@ def train(config: dict) -> DreamerAgent:
         done = False
 
         while not done:
-            # 渲染影像以取得畫素觀測值 (Pixel observation)
-            pixel_obs = env.render()  # (H, W, C)
-            if pixel_obs is None:
-                # 若無法渲染則使用全黑影像作為備案 (Fallback)
-                pixel_obs = np.zeros((64, 64, 3), dtype=np.uint8)
-
-            # 選擇動作 (Select action)
             if global_step < config["seed_steps"]:
                 action = env.action_space.sample()
-                if not isinstance(action, np.ndarray):
-                    action = np.array([action], dtype=np.float32)
             else:
-                action = agent.select_action(pixel_obs.transpose(2, 0, 1))
+                action = agent.select_action(obs)
 
-            next_obs, reward, terminated, truncated, _ = env.step(
-                action if hasattr(env.action_space, 'shape') else int(action.argmax())
-            )
+            next_obs, reward, terminated, truncated, _ = env.step(action)
             done = terminated or truncated
-            agent.store(pixel_obs, action, reward, done)
+            agent.store(obs, action, reward, done)
+            obs = next_obs
             ep_return += reward
             ep_length += 1
             global_step += 1
 
-            # 每隔 C 步進行更新 (Update every C steps)
             if global_step % config["update_every"] == 0 and global_step > config["seed_steps"]:
                 for _ in range(config["update_steps"]):
                     metrics = agent.update()
-                if metrics and global_step % (config["update_every"] * 10) == 0:
+                if metrics and global_step % (config["update_every"] * 20) == 0:
                     logger.log_scalars(metrics, global_step)
 
         logger.log_episode(ep_return, ep_length, global_step)
-        if episode % 10 == 0:
-            print(f"集數 {episode:5d} | 步數 {global_step:8d} | 回報: {ep_return:.1f}")
+
+        if episode % config["eval_freq"] == 0:
+            mean_r, std_r = evaluate(agent, eval_env)
+            logger.log_scalar("eval/mean_return", mean_r, global_step)
+            print(f"Episode {episode:5d} | Step {global_step:8d} | Eval: {mean_r:.1f} ± {std_r:.1f}")
+            if mean_r > best_eval:
+                best_eval = mean_r
+                agent.save("best_checkpoints")
+                print(f"  ** 新最佳 {best_eval:.1f}，已儲存 checkpoint **")
 
     logger.close()
     env.close()
+    eval_env.close()
+    print(f"\n訓練完成。最佳 eval: {best_eval:.1f}")
     return agent
 
 
 if __name__ == "__main__":
     config = {
-        "env_id": "Pendulum-v1",   # Replace with dm_control env for real Dreamer
-        "n_episodes": 100,
-        "obs_channels": 3,
-        "deter_dim": 200,
-        "stoch_dim": 30,
-        "embed_dim": 1024,
-        "gamma": 0.99,
-        "lambda_": 0.95,
+        "env_id":         "Pendulum-v1",
+        "n_episodes":     500,
+        "embed_dim":      64,
+        "deter_dim":      128,
+        "stoch_dim":      20,
+        "gamma":          0.99,
+        "lambda_":        0.95,
         "imagine_horizon": 15,
-        "seed_steps": 5000,
-        "update_every": 50,
-        "update_steps": 1,
-        "device": "cuda" if torch.cuda.is_available() else "cpu",
+        "seed_steps":     1000,
+        "update_every":   20,
+        "update_steps":   4,
+        "eval_freq":      25,
+        "device":         "cuda" if torch.cuda.is_available() else "cpu",
     }
     train(config)

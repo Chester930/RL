@@ -204,3 +204,33 @@ class ValueNetwork(nn.Module):
 
     def forward(self, latent: torch.Tensor) -> torch.Tensor:
         return self.net(latent)
+
+
+class StateEncoder(nn.Module):
+    """MLP 編碼器：低維狀態向量 -> 潛在嵌入。"""
+
+    def __init__(self, state_dim: int, embed_dim: int = 64):
+        super().__init__()
+        self.net = nn.Sequential(
+            nn.Linear(state_dim, 256), nn.ELU(),
+            nn.Linear(256, 256), nn.ELU(),
+            nn.Linear(256, embed_dim),
+        )
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return self.net(x)
+
+
+class StateDecoder(nn.Module):
+    """MLP 解碼器：潛在狀態 -> 重建狀態向量。"""
+
+    def __init__(self, latent_dim: int, state_dim: int):
+        super().__init__()
+        self.net = nn.Sequential(
+            nn.Linear(latent_dim, 256), nn.ELU(),
+            nn.Linear(256, 256), nn.ELU(),
+            nn.Linear(256, state_dim),
+        )
+
+    def forward(self, z: torch.Tensor) -> torch.Tensor:
+        return self.net(z)

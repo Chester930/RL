@@ -236,6 +236,7 @@ class MBPOAgent(BaseAgent):
 
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
+        nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=1.0)
         self.critic_optimizer.step()
 
         # --- 演員 (Actor) 更新 ---
@@ -245,6 +246,7 @@ class MBPOAgent(BaseAgent):
 
         self.actor_optimizer.zero_grad()
         actor_loss.backward()
+        nn.utils.clip_grad_norm_(self.actor.parameters(), max_norm=1.0)
         self.actor_optimizer.step()
 
         # --- Alpha 更新 ---

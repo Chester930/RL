@@ -214,26 +214,31 @@ class TRPOAgent(BaseAgent):
         log_probs = dist.log_prob(actions)
         ratio = (log_probs - old_log_probs).exp()
         surr_loss = -(ratio * advantages.detach()).mean()
+        old_surr = (ratio * advantages.detach()).mean().item()
 
         grads = torch.autograd.grad(surr_loss, self.net.actor.parameters())
         flat_grad = torch.cat([g.view(-1) for g in grads])
 
-        # TODO: 自然梯度步長 d = H^{-1} g
+        # 自然梯度步長 d = H^{-1} g
         natural_grad = self._conjugate_gradient(-flat_grad, states)
 
-        # TODO: 計算滿足 KL 約束的最大步長 (Max step size)
+        # 計算滿足 KL 約束的最大步長 (Max step size)
         sAs = torch.dot(natural_grad, self._fisher_vector_product(natural_grad, states))
         step_size = torch.sqrt(2 * self.max_kl / (sAs + 1e-8))
         max_step = step_size * natural_grad
 
-        # TODO: 回溯線性搜尋 (Backtracking line search)
+        # 回溯線性搜尋：同時確認 KL 約束 & surrogate 改善
         old_params = self._flat_params().clone()
         for i in range(self.line_search_iters):
             new_params = old_params + (0.5 ** i) * max_step
             self._set_flat_params(new_params)
-            new_dist = self.net.get_policy(states)
-            kl = torch.distributions.kl_divergence(old_dist, new_dist).mean()
-            if kl < self.max_kl:
+            with torch.no_grad():
+                new_dist = self.net.get_policy(states)
+                kl = torch.distributions.kl_divergence(old_dist, new_dist).mean()
+                new_log_probs = new_dist.log_prob(actions)
+                new_ratio = (new_log_probs - old_log_probs).exp()
+                new_surr = (new_ratio * advantages.detach()).mean().item()
+            if kl < self.max_kl and new_surr > old_surr:
                 break
         else:
             self._set_flat_params(old_params)  # 若線性搜尋失敗則恢復原始引數

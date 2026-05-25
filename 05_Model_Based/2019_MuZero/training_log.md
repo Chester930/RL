@@ -61,3 +61,47 @@
 - 架構正確（三網路：h/g/f + MCTS UCB selection + expansion + backup + unroll training），梯度流動正常
 - 與 Dreamer 的差異：MuZero 的 MCTS 每步需 N×dynamics_net 前向傳播，CPU 每集耗時更長
 - 如需完整效果：需 GPU + 更多 simulations（≥50）+ 更長訓練（≥10K episodes）+ 完整 MCTS policy targets（儲存造訪次數分佈而非 one-hot 動作）
+
+---
+
+## CartPole-v1 重跑（2026-05-24，任務 E）
+
+### 修改內容
+
+| 引數 | 舊值 | 新值 | 原因 |
+|------|------|------|------|
+| num_simulations | 25 | 50 | 更多模擬提升 MCTS 搜尋品質 |
+| n_episodes | 500 | 3000 | 給予充足訓練集數 |
+| eval_freq | — | 每 100 集 | 加入定期評估與 best checkpoint 儲存 |
+
+### 訓練過程（eval 每 100 集）
+
+| 集數 | Eval 平均 | 備註 |
+|------|-----------|------|
+| 100 | 9.1 ± 0.5 | 隨機基線 |
+| 500 | 8.8 ± 1.0 | 無改善 |
+| 1000 | 9.4 ± 0.8 | 無改善 |
+| 1500 | 9.5 ± 0.8 | 無改善 |
+| 2000 | 9.2 ± 0.7 | 無改善 |
+| 2600 | **10.2 ± 0.6** | 最佳（統計雜訊，非真實學習）|
+| 3000 | 9.2 ± 0.6 | 最終，與初始相同 |
+
+### 根本原因分析
+
+**為何 num_simulations=50、3000 集仍無法改善？**
+
+1. **短集數死循環**：CartPole 隨機策略每集 ~9 步。MCTS 在 9 步的短樹上做 50 次模擬，所有動作的 UCB 分數接近相同（Q 值均為小數值），結果等同隨機選動作。
+
+2. **Policy target 是隨機動作**：update() 用 `game[idx]["action"]` 作為策略目標，但這個動作本身是 MCTS 在隨機網路上選出的隨機動作。形成死循環：隨機策略 → 短集數 → 隨機動作目標 → 策略學隨機動作。
+
+3. **Representation 未學習**：Representation network 將 4D 狀態映射到 64D 隱藏空間，但無監督信號強迫它學習有意義的表示。隨機初始化 → 所有狀態的隱藏表示互相糾纏 → dynamics/prediction 網路無法區分好壞狀態。
+
+4. **與真實 MuZero 的差距**：論文實作儲存 MCTS 造訪次數分佈（N(s,a)/N(s)）作為策略目標，而非動作 one-hot。這允許 MCTS 的相對評估（哪個動作被造訪更多次）傳遞到策略網路。本骨架實作缺少此機制。
+
+### 結論
+
+本次重跑確認：**MuZero 的結果停在隨機基線（~9）是結構性問題，非超參數問題。**
+
+- 增加 num_simulations（25→50）和 n_episodes（500→3000）對結果無顯著影響
+- 若要讓 MuZero 真正學習，需要：MCTS 造訪次數分佈作為 policy target、temperature scheduling（早期探索 → 晚期貪婪）、以及至少 10K 集以上的訓練
+- **教學定位調整**：MuZero 作為「骨架架構展示」，重點放在三網路設計（h/g/f）和 MCTS 流程，而非訓練結果。參考 [muzero-general](https://github.com/werner-duvaud/muzero-general) 看完整實作。

@@ -77,6 +77,12 @@ def train(config: dict) -> MBPOAgent:
         if step < config["random_steps"]:
             continue
 
+        # rollout_length 排程：每 10k 步 +1，最高 5
+        new_rollout = min(5, 1 + step // 10_000)
+        if new_rollout != agent.rollout_length:
+            agent.rollout_length = new_rollout
+            print(f"步數 {step}: rollout_length 更新為 {new_rollout}")
+
         # 定期重新訓練動態模型 (Retrain dynamics model)
         if step % config["model_train_freq"] == 0:
             model_metrics = agent.update_model(n_epochs=config["model_epochs"])
@@ -111,27 +117,27 @@ def train(config: dict) -> MBPOAgent:
 if __name__ == "__main__":
     config = {
         "env_id": "Pendulum-v1",
-        "total_steps": 50_000,     # 縮短加快完成
-        "random_steps": 1_000,
+        "total_steps": 150_000,    # 重跑：50k→150k
+        "random_steps": 2_000,
         "hidden_dim": 256,
         "ensemble_members": 3,
         "n_elite": 2,
-        "rollout_length": 1,
-        "rollout_batch_size": 200,
-        "real_ratio": 0.3,         # 修正：0.05→0.3，避免 Q 值爆炸
+        "rollout_length": 1,       # 起始值；排程每 10k 步 +1，最高 5
+        "rollout_batch_size": 400, # 200→400
+        "real_ratio": 0.5,         # 0.3→0.5，減少模型誤差比例
         "gamma": 0.99,
         "tau": 0.005,
-        "lr": 1e-4,                # 修正：3e-4→1e-4，穩定 SAC 更新
+        "lr": 3e-4,                # 恢復標準 SAC lr（real_ratio=0.5 已穩定）
         "model_lr": 1e-3,
         "real_buffer_size": 100_000,
-        "model_buffer_size": 100_000,
+        "model_buffer_size": 400_000,  # 100k→400k，容納長 rollout
         "batch_size": 256,
-        "model_train_freq": 250,
-        "model_epochs": 3,         # 修正：5→3，減少過擬合
-        "sac_updates_per_step": 5, # 修正：10→5，減少積累誤差
-        "log_freq": 2_000,
+        "model_train_freq": 500,   # 250→500，累積更多真實資料再訓練
+        "model_epochs": 5,         # 3→5，更充分訓練模型
+        "sac_updates_per_step": 5,
+        "log_freq": 5_000,
         "eval_freq": 10_000,
-        "save_freq": 25_000,
+        "save_freq": 50_000,
         "device": "cuda" if __import__("torch").cuda.is_available() else "cpu",
     }
     train(config)
