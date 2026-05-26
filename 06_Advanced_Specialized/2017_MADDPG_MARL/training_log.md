@@ -85,17 +85,101 @@
 
 ---
 
-## MADDPG 核心架構（CTDE）
+## MADDPG 核心機制詳解
+
+> 以下說明 CTDE（集中訓練，分散執行）架構的關鍵設計，幫助理解為什麼多 agent 不能直接用 DDPG
+
+---
+
+### 一、多 Agent 的核心問題：非穩態（Non-Stationarity）
 
 ```
-訓練時（集中式）：
-  Critic_i 輸入：[obs_1, obs_2, act_1, act_2] → Q_i
+問題設定：2 個 agents（agent 1, agent 2），各有自己的策略 π_1, π_2
 
-執行時（分散式）：
-  Actor_i 輸入：obs_i → act_i（不需要其他 agent 資訊）
+若 agent 1 用自己的 DDPG（只看 obs_1）：
+  Q_1(obs_1, act_1) = 「在 obs_1 選 act_1 的期望回報」
+
+問題：
+  Q_1 的值依賴 agent 2 的策略 π_2（因為環境會受兩個 agent 共同影響）
+  但 π_2 在訓練過程中持續改變！
+
+→ 從 Q_1 的角度，環境「無故變化」→ 訓練目標不穩定 → 無法收斂
 ```
 
-**與 DDPG 的差異**：每個 agent 的 Critic 在訓練時可觀察全域狀態，避免非穩態問題（non-stationarity），是多 agent 協作的關鍵創新。
+**這就是多 agent 不能直接用單 agent DDPG 的原因。**
+
+---
+
+### 二、CTDE 解法：訓練時集中、執行時分散
+
+```
+訓練時（Centralized Critic）：
+  Q_1(obs_1, obs_2, act_1, act_2) → 使用所有 agent 的資訊
+
+  固定 π_2 後，Q_1 的條件期望穩定：
+    E[r_1 | obs_1, obs_2, act_1, act_2, π_2] ← π_2 已包含在條件中
+  → 從 Q_1 的角度，環境不再「無故變化」→ 訓練穩定
+
+執行時（Decentralized Actor）：
+  Actor_1(obs_1) → act_1   ← 只用自己的觀測（現實場景無法看到他人資訊）
+  Actor_2(obs_2) → act_2
+```
+
+**本訓練（SimpleCoopEnv）的具體維度：**
+
+```
+obs_dim = 4（每個 agent），act_dim = 2（每個 agent）
+
+Centralized Critic 輸入：
+  [obs_1(4), obs_2(4), act_1(2), act_2(2)] = 12 維向量
+  → MLP 128 → Q_1（純量）
+
+Decentralized Actor 輸入：
+  [obs_1(4)] → MLP 128 → act_1（2 維）
+```
+
+---
+
+### 三、Actor 的訓練（Policy Gradient）
+
+```
+Actor_1 更新（最大化 Q_1）：
+
+J(θ_1) = E[Q_1(obs_1, obs_2, act_1=μ_1(obs_1), act_2=μ_2(obs_2))]
+
+梯度（鏈式法則）：
+  ∂J/∂θ_1 = E[∂Q_1/∂act_1 · ∂μ_1(obs_1)/∂θ_1]
+
+注意：
+  - Q_1 需要 obs_2, act_2（其他 agent 的資訊）→ 只在訓練時可用
+  - ∂Q_1/∂act_1 由集中式 Critic 提供梯度方向
+  - ∂μ_1/∂θ_1 由 Actor_1 自己的雅可比提供
+
+執行時 act_2 = μ_2(obs_2)（使用其他 agent 的最新策略近似值）
+```
+
+---
+
+### 四、訓練不穩定的直接原因（本訓練數據）
+
+```
+觀察：後 10k 均值（ep 40k–50k）= -8.2，與前 10k 均值 -8.5 相近
+      峰值改善（-3.77→-2.04）但均值幾乎不變
+
+原因分析：
+1. 每步更新（vs 每集批次更新）→ 梯度噪聲高
+   → 每步 256 個樣本中，agent 2 的策略也在變化
+   → 集中式 Critic 的「穩態保證」在每步更新中被部分破壞
+
+2. SimpleCoopEnv 的協作難度：
+   → 兩個 agent 需同時推動狀態趨近原點
+   → 最優策略需協調（agent 1 往 +x 推，agent 2 往 -x 推）
+   → 任一 agent 策略震盪都會拉動另一個 → 協作不穩定
+
+3. 峰值 -2.04 vs 均值 -8.2 差距 4×：
+   → 兩個 agent 偶爾「碰巧」協調 → 峰值
+   → 更多時候互相干擾 → 均值差
+```
 
 ---
 
