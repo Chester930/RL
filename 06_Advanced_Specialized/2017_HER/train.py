@@ -109,12 +109,16 @@ def train(config: dict) -> HERAgent:
         # 在每個 Epoch 的取樣結束後執行梯度更新 (Gradient updates)
         for _ in range(config["updates_per_epoch"]):
             metrics = agent.update()
+        if metrics and np.isnan(metrics.get("critic_loss", 0)):
+            raise RuntimeError(f"NaN loss detected at epoch {epoch}, stopping training.")
 
         # 評估 (Evaluate)
         if epoch % config["eval_freq"] == 0:
             success_rate = evaluate_goal_env(agent, eval_env, n_episodes=10)
             logger.log_scalar("eval/success_rate", success_rate, epoch)
             print(f"週期 {epoch:5d}  成功率: {success_rate:.2%}")
+            if epoch > 1000 and success_rate < best_rate * 0.3:
+                print(f"  [WARNING] eval 崩潰：{success_rate:.2%} vs 峰值 {best_rate:.2%}")
             if success_rate > best_rate:
                 best_rate = success_rate
                 agent.save("checkpoints/best")

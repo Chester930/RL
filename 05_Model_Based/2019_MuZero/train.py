@@ -62,12 +62,16 @@ def train(config: dict) -> MuZeroAgent:
 
         agent.store(game_history)
         metrics = agent.update()
+        if metrics and np.isnan(metrics.get("value_loss", 0)):
+            raise RuntimeError(f"NaN loss detected at episode {episode}, stopping training.")
         logger.log_episode(ep_return, ep_length, episode)
 
         if episode % config["eval_freq"] == 0:
             mean_r, std_r = evaluate(agent, eval_env)
             logger.log_scalar("eval/mean_return", mean_r, episode)
             print(f"Episode {episode:5d} | Eval: {mean_r:.1f} ± {std_r:.1f} | Buffer: {len(agent.replay_buffer)}")
+            if episode > 1000 and mean_r < best_eval * 0.3:
+                print(f"  [WARNING] eval 崩潰：{mean_r:.1f} vs 峰值 {best_eval:.1f}")
             if mean_r > best_eval:
                 best_eval = mean_r
                 agent.save("best_checkpoints")

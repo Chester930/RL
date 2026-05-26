@@ -64,3 +64,64 @@
 | 核心公式 | RM 分數 + KL 懲罰 | closed-form Bradley-Terry |
 
 **合成資料限制**：本實作使用隨機資料，無法展示 DPO 的真實收斂效果。生產環境需真實人類偏好對標注，可參考 HuggingFace TRL 的 `DPOTrainer`。
+
+---
+
+## 合成資料框架說明
+
+### 為何使用合成資料
+
+DPO 相較 RLHF 更易實作（無需 RM + PPO），但仍需真實偏好對資料。本實作用合成資料的原因：
+
+| 原因 | 說明 |
+|---|---|
+| **教學定位** | 展示 DPO 損失函式（Bradley-Terry + KL）的計算流程，而非重現論文結果 |
+| **無需外部依賴** | 真實偏好資料集需 HuggingFace 帳號或網路存取；合成資料可離線執行 |
+| **對比 RLHF** | 重點是讓學生比較「DPO 無需訓練 RM」vs「RLHF 三階段」的架構差異 |
+
+### 合成資料下各指標的「正確」行為
+
+| 指標 | 合成資料預期值 | 真實資料預期值 |
+|---|---|---|
+| 損失 | 2–7 之間震盪，不收斂 | 穩定下降至 ~0.5–1.5 |
+| 獎勵差距（chosen−rejected）| 圍繞 0 震盪 | 穩定上升至正值（>1.0）|
+| 準確率 | ~50%（隨機猜測）| 收斂至 65–80% |
+
+**準確率 50% ≠ 訓練失敗**：合成的 chosen/rejected 對是隨機生成的，無真實「哪個更好」的信號，模型正確地學到「無從分辨」。
+
+### 如何替換成真實資料
+
+**步驟一：載入偏好資料集**
+```python
+from datasets import load_dataset
+
+# 選項 A：Anthropic HH-RLHF（對話，~700k 筆）
+dataset = load_dataset("Anthropic/hh-rlhf", split="train")
+# 欄位：{"chosen": "Human: ...\nAssistant: ...", "rejected": "..."}
+
+# 選項 B：Stanford SHP（StackExchange 問答偏好，~385k 筆）
+dataset = load_dataset("stanfordnlp/SHP", split="train")
+# 欄位：{"history": "...", "human_ref_A": "...", "human_ref_B": "...", "labels": 0/1}
+```
+
+**步驟二：使用 TRL DPOTrainer**
+```python
+from trl import DPOTrainer, DPOConfig
+
+training_args = DPOConfig(beta=0.1, max_length=512, ...)
+trainer = DPOTrainer(
+    model=model,
+    ref_model=ref_model,       # SFT 參考模型（凍結）
+    args=training_args,
+    train_dataset=dataset,
+)
+trainer.train()
+```
+
+**預期結果（真實資料）**：損失穩定下降，準確率收斂至 65–75%，chosen 獎勵持續高於 rejected 獎勵。
+
+### DPO vs RLHF 在真實資料下的核心差距
+
+- **DPO 優勢**：單階段訓練，無需維護 RM 和 PPO 的超參
+- **DPO 限制**：需要靜態偏好對資料集；無法像 RLHF 那樣動態生成新的偏好回饋
+- **實務選擇**：資料充足 → DPO；需要持續收集人類回饋 → RLHF

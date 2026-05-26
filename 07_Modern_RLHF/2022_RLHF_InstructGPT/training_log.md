@@ -85,3 +85,62 @@
 | PPO | 以 RM 分數為獎勵，用 PPO 最佳化策略；KL 懲罰防止偏離 SFT 太遠 |
 
 **合成資料限制**：本實作使用隨機合成資料，RM 無法學到真實偏好，PPO 獎勵為負且平穩。實際 RLHF 需真實人類標注資料，建議參考 HuggingFace TRL 框架。
+
+---
+
+## 合成資料框架說明
+
+### 為何使用合成資料
+
+| 原因 | 說明 |
+|---|---|
+| **算力限制** | InstructGPT 原論文使用 175B GPT-3；本實作用 128-dim 4層 Transformer 在 CPU 跑完整三階段流程 |
+| **資料取得** | 真實人類偏好標注需要 API（OpenAI）或龐大標注工作；本實作目的是展示流程而非重現結果 |
+| **教學目標** | 核心目標是讓學生看懂「SFT → RM → PPO 三階段串接」，資料品質是次要的 |
+| **課堂時間** | 真實資料集下載 + 預處理需額外 1–2 小時，超出課程範圍 |
+
+### 合成資料下各指標的「正確」行為
+
+| 指標 | 合成資料預期值 | 真實資料預期值 | 差異解讀 |
+|---|---|---|---|
+| RM 損失 | ~0.693（隨機基線）| < 0.4（收斂）| log(2) = 二元分類隨機猜測的交叉熵下界 |
+| RM 準確率 | ~50% | > 70% | 合成資料無 chosen/rejected 信號差異 |
+| PPO 平均獎勵 | 負值且平穩（~-17）| 逐漸上升 | 隨機 RM 給出雜訊分數，無法引導策略 |
+| SFT 損失 | 下降（20→12）✅ | 下降 | SFT 是監督學習，合成與真實差異不大 |
+
+### 如何替換成真實資料
+
+**步驟一：安裝 TRL 與資料集**
+```bash
+pip install trl datasets transformers
+```
+
+**步驟二：載入真實偏好資料集**
+```python
+from datasets import load_dataset
+
+# 選項 A：Anthropic HH-RLHF（對話偏好，700k 筆）
+dataset = load_dataset("Anthropic/hh-rlhf", split="train")
+# 欄位：{"chosen": "...", "rejected": "..."}
+
+# 選項 B：OpenAI 摘要偏好（TL;DR）
+dataset = load_dataset("openai/summarize_from_feedback", "comparisons", split="train")
+```
+
+**步驟三：使用 TRL 替換訓練迴圈**
+```python
+from trl import SFTTrainer, RewardTrainer, PPOTrainer
+
+# SFT 階段
+sft_trainer = SFTTrainer(model=model, train_dataset=sft_dataset, ...)
+sft_trainer.train()
+
+# RM 階段
+rm_trainer = RewardTrainer(model=rm_model, train_dataset=pref_dataset, ...)
+rm_trainer.train()
+
+# PPO 階段
+ppo_trainer = PPOTrainer(config=ppo_config, model=model, ref_model=ref_model, ...)
+```
+
+**預期結果（真實資料）**：RM 損失收斂至 ~0.3，準確率 ~70–75%，PPO 獎勵從負值逐漸上升至正值。

@@ -91,6 +91,8 @@ def train(config: dict):
         rewards_snap = list(agent._rewards)
 
         metrics = agent.update()
+        if metrics and np.isnan(metrics.get("loss", 0)):
+            raise RuntimeError(f"NaN loss detected at episode {episode}, stopping training.")
 
         recent.append(ep_return)
         logger.log_episode(ep_return, ep_length, step=episode)
@@ -102,6 +104,8 @@ def train(config: dict):
             logger.log_scalar("eval/mean_return", mean_r, step=episode)
             print(f"Episode {episode:5d}  Eval: {mean_r:.1f} ± {std_r:.1f}  "
                   f"Recent100: {np.mean(recent):.1f}")
+            if episode > 10_000 and mean_r < best_return * 0.3:
+                print(f"  [WARNING] eval 崩潰：{mean_r:.1f} vs 峰值 {best_return:.1f}")
             if mean_r > best_return:
                 best_return = mean_r
                 agent.save("checkpoints/best")

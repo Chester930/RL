@@ -368,6 +368,8 @@ def train(config: dict):
         # ── 更新 ──────────────────────────────────────────────────────
         if step >= config["learning_starts"]:
             metrics = agent.update()
+            if metrics and np.isnan(metrics.get("loss", 0)):
+                raise RuntimeError(f"NaN loss detected at step {step}, stopping training.")
             if metrics:
                 last_metrics = metrics
 
@@ -393,6 +395,8 @@ def train(config: dict):
             print(f"步數 {step:8,}  eval={mean_r:.1f}±{std_r:.1f}  "
                   f"recent{config['window']}={recent_mean:.1f}  "
                   f"ε={eps:.3f}  buf={len(agent.buffer):,}")
+            if step > 10_000 and mean_r < best_return * 0.3:
+                print(f"  [WARNING] eval 崩潰：{mean_r:.1f} vs 峰值 {best_return:.1f}")
             if mean_r > best_return:
                 best_return = mean_r
                 agent.save(os.path.join(ckpt_dir, "best"))

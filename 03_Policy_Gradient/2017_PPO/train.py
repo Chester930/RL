@@ -75,6 +75,8 @@ def train(config: dict) -> PPOAgent:
 
         # 執行更新 (Update)
         metrics = agent.update(next_state=obs, last_done=done)
+        if metrics and np.isnan(metrics.get("loss", 0)):
+            raise RuntimeError(f"NaN loss detected at step {global_step}, stopping training.")
         n_updates += 1
 
         if metrics and update % config["log_freq_updates"] == 0:
@@ -92,6 +94,8 @@ def train(config: dict) -> PPOAgent:
             mean_r, std_r = evaluate(agent, eval_env)
             logger.log_scalar("eval/mean_return", mean_r, global_step)
             print(f"  >>> 評估結果 (Eval): {mean_r:.1f} ± {std_r:.1f}")
+            if global_step > 10_000 and mean_r < best_return * 0.3:
+                print(f"  [WARNING] eval 崩潰：{mean_r:.1f} vs 峰值 {best_return:.1f}")
             if mean_r > best_return:
                 best_return = mean_r
                 agent.save("checkpoints/best")

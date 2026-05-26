@@ -74,6 +74,8 @@ def train(config: dict) -> StateDreamerAgent:
             if global_step % config["update_every"] == 0 and global_step > config["seed_steps"]:
                 for _ in range(config["update_steps"]):
                     metrics = agent.update()
+                if metrics and np.isnan(metrics.get("critic_loss", 0)):
+                    raise RuntimeError(f"NaN loss detected at step {global_step}, stopping training.")
                 if metrics and global_step % (config["update_every"] * 20) == 0:
                     logger.log_scalars(metrics, global_step)
 
@@ -83,6 +85,8 @@ def train(config: dict) -> StateDreamerAgent:
             mean_r, std_r = evaluate(agent, eval_env)
             logger.log_scalar("eval/mean_return", mean_r, global_step)
             print(f"Episode {episode:5d} | Step {global_step:8d} | Eval: {mean_r:.1f} ± {std_r:.1f}")
+            if global_step > 10_000 and mean_r < best_eval * 0.3:
+                print(f"  [WARNING] eval 崩潰：{mean_r:.1f} vs 峰值 {best_eval:.1f}")
             if mean_r > best_eval:
                 best_eval = mean_r
                 agent.save("best_checkpoints")

@@ -73,3 +73,80 @@
 ## 合成資料限制
 
 本實作使用隨機合成獎勵（固定回傳 0.1），組內獎勵標準差恆為 0，導致 advantage=0/0（用 eps 穩定），無法展示真實學習效果。實際 GRPO 需可驗證的獎勵函數（如數學答案正確性判斷），參考 DeepSeek-R1 使用的 rule-based reward。
+
+---
+
+## 合成資料框架說明
+
+### 為何使用合成獎勵
+
+GRPO 的關鍵創新是「用組內均值代替 Critic」，因此獎勵函數的多樣性（組內標準差 > 0）是學習的前提。本實作用固定獎勵 0.1 的原因：
+
+| 原因 | 說明 |
+|---|---|
+| **展示框架** | 教學目標是讓學生看懂「G 個採樣 → 組內正規化 → clip update」的計算圖 |
+| **無需驗證器** | 真實 GRPO 需要一個能判斷「答案對不對」的程式；數學驗證器需額外實作 |
+| **揭示前提** | 固定獎勵導致 advantage=0，反向展示了「GRPO 為什麼需要有差異的獎勵」|
+
+### 固定獎勵下各指標的「正確」行為
+
+| 指標 | 固定獎勵預期值 | 真實獎勵預期值 |
+|---|---|---|
+| 平均獎勵 | 0.100（固定不變）| 從低到高穩定上升 |
+| 獎勵標準差 | 0.000 | > 0（組內有分散）|
+| KL 散度 | ~0.000 | 小幅上升後穩定 |
+| 損失 | ~0.4147（無梯度）| 下降至收斂值 |
+
+**advantage=0 = 零梯度**：`std(r)=0` → 所有優勢歸一化後為 0 → 梯度為 0 → 模型完全不更新。這是正確行為，不是訓練失敗。
+
+### 如何替換成真實獎勵函數
+
+**選項 A：數學問題（最接近 DeepSeek-R1）**
+```python
+import re
+
+def math_reward_fn(response: str, ground_truth: str) -> float:
+    # 提取模型回應中的數字答案
+    matches = re.findall(r"\\boxed\{([^}]+)\}", response)
+    if matches and matches[-1].strip() == ground_truth.strip():
+        return 1.0    # 答案正確
+    return 0.0        # 答案錯誤
+
+# 資料集：GSM8K（8500 道小學數學題）
+from datasets import load_dataset
+gsm8k = load_dataset("openai/gsm8k", "main", split="train")
+# 欄位：{"question": "...", "answer": "...<final>數字"}
+```
+
+**選項 B：程式碼生成（可執行驗證）**
+```python
+def code_reward_fn(code: str, test_cases: list) -> float:
+    passed = 0
+    for test in test_cases:
+        try:
+            exec(code)
+            exec(test)
+            passed += 1
+        except:
+            pass
+    return passed / len(test_cases)
+```
+
+**選項 C：使用 TRL GRPOTrainer（最快上手）**
+```python
+from trl import GRPOTrainer, GRPOConfig
+
+def reward_fn(completions, prompts, **kwargs):
+    # 返回每個 completion 的獎勵（長度 = group_size × batch_size）
+    return [math_reward_fn(c, get_answer(p)) for c, p in zip(completions, prompts)]
+
+trainer = GRPOTrainer(
+    model=model,
+    reward_funcs=reward_fn,
+    args=GRPOConfig(num_generations=8, ...),  # num_generations = group_size G
+    train_dataset=gsm8k,
+)
+trainer.train()
+```
+
+**預期結果（真實獎勵）**：平均獎勵從 ~0% 準確率逐漸提升，KL 散度緩步上升，損失下降並收斂。DeepSeek-R1-Zero 在 MATH 資料集上從 ~15% 提升至 ~70% pass@1。

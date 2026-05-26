@@ -144,6 +144,8 @@ def train(config: dict) -> MAPPOAgent:
         # 使用最後的價值進行引導 (Bootstrap last values)
         last_values = agent.get_values([global_state] * n_agents)
         metrics = agent.update(last_values)
+        if metrics and np.isnan(metrics.get("agent0_critic_loss", 0)):
+            raise RuntimeError(f"NaN loss detected at step {step}, stopping training.")
 
         if step % config["log_freq"] == 0:
             logger.log_scalars(metrics, step)

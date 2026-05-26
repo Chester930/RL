@@ -392,6 +392,8 @@ def train(config):
         # ── 更新 ──────────────────────────────────────────────────────
         if step >= config["learning_starts"]:
             metrics = agent.update()
+            if metrics and np.isnan(metrics.get("loss", 0)):
+                raise RuntimeError(f"NaN loss detected at step {step}, stopping training.")
             if metrics:
                 last_metrics = metrics
 
@@ -414,6 +416,8 @@ def train(config):
             logger.log_scalar("eval/mean_return", mean_r, step)
             eps = agent.epsilon_schedule.get(step)
             recent_mean = float(np.mean(recent_returns)) if recent_returns else 0.0
+            if step > 10_000 and mean_r < best_eval * 0.3:
+                print(f"  [WARNING] eval 崩潰：{mean_r:.1f} vs 峰值 {best_eval:.1f}")
             if mean_r > best_eval:
                 best_eval = mean_r
                 agent.save(best_ckpt_dir)

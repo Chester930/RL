@@ -88,6 +88,8 @@ def train(config: dict) -> A2CAgent:
             obs = next_obs
 
         metrics = agent.update(obs, dones)
+        if metrics and np.isnan(metrics.get("critic_loss", 0)):
+            raise RuntimeError(f"NaN loss detected at step {global_step}, stopping training.")
         if metrics and global_step % config["log_freq"] == 0:
             logger.log_scalars(metrics, global_step)
 
@@ -95,6 +97,8 @@ def train(config: dict) -> A2CAgent:
             mean_r, std_r = evaluate(agent, eval_env)
             logger.log_scalar("eval/mean_return", mean_r, global_step)
             print(f"更新 {update:6d} | 步數 {global_step:8d} | 評估: {mean_r:.1f} ± {std_r:.1f}")
+            if global_step > 10_000 and mean_r < best_return * 0.3:
+                print(f"  [WARNING] eval 崩潰：{mean_r:.1f} vs 峰值 {best_return:.1f}")
             if mean_r > best_return:
                 best_return = mean_r
                 agent.save("checkpoints/best")

@@ -65,6 +65,8 @@ def train(config: dict) -> TD3Agent:
 
         if step >= config["learning_starts"]:
             metrics = agent.update()
+            if metrics and np.isnan(metrics.get("critic_loss", 0)):
+                raise RuntimeError(f"NaN loss detected at step {step}, stopping training.")
             if metrics and step % config["log_freq"] == 0:
                 logger.log_scalars(metrics, step)
 
@@ -72,6 +74,8 @@ def train(config: dict) -> TD3Agent:
             mean_r, std_r = evaluate(agent, eval_env)
             logger.log_scalar("eval/mean_return", mean_r, step)
             print(f"Step {step:8d}  Eval: {mean_r:.1f} ± {std_r:.1f}")
+            if step > 10_000 and mean_r < best_return * 0.3:
+                print(f"  [WARNING] eval 崩潰：{mean_r:.1f} vs 峰值 {best_return:.1f}")
             if mean_r > best_return:
                 best_return = mean_r
                 agent.save("checkpoints/best")

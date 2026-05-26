@@ -401,6 +401,8 @@ def train(config: dict) -> RainbowAgent:
         # 網路更新
         if step >= config["learning_starts"]:
             metrics = agent.update()
+            if metrics and np.isnan(metrics.get("loss", 0)):
+                raise RuntimeError(f"NaN loss detected at step {step}, stopping training.")
             if metrics:
                 last_metrics = metrics
                 logger.log_scalars(metrics, step)
@@ -425,6 +427,8 @@ def train(config: dict) -> RainbowAgent:
                 f"recent100={np.mean(recent100):.1f}  "
                 f"β={agent.buffer.beta:.4f}"
             )
+            if step > 10_000 and eval_mean < best_return * 0.3:
+                print(f"  [WARNING] eval 崩潰：{eval_mean:.1f} vs 峰值 {best_return:.1f}")
             if eval_mean > best_return:
                 best_return = eval_mean
                 agent.save("checkpoints/best")

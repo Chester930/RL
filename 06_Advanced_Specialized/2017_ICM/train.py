@@ -82,6 +82,8 @@ def train(config: dict) -> ICMAgent:
 
         # 取樣結束後執行更新 (Update after rollout)
         metrics = agent.update()
+        if metrics and np.isnan(metrics.get("policy_loss", 0)):
+            raise RuntimeError(f"NaN loss detected at step {total_steps}, stopping training.")
         total_steps += config["rollout_steps"]
 
         if metrics:
@@ -92,6 +94,8 @@ def train(config: dict) -> ICMAgent:
             logger.log_scalar("eval/mean_return", mean_r, total_steps)
             print(f"步數 {total_steps:8d}  評估回報: {mean_r:.1f} ± {std_r:.1f}  "
                   f"內在獎勵: {metrics.get('mean_intr_reward', 0):.4f}")
+            if total_steps > 10_000 and mean_r < best_return * 0.3:
+                print(f"  [WARNING] eval 崩潰：{mean_r:.1f} vs 峰值 {best_return:.1f}")
             if mean_r > best_return:
                 best_return = mean_r
                 agent.save("checkpoints/best")
