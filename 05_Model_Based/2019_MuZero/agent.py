@@ -322,6 +322,14 @@ class MuZeroAgent(BaseAgent):
         self.dynamics.load_state_dict(ckpt["dynamics"])
         self.prediction.load_state_dict(ckpt["prediction"])
 
+    def save_resume(self, path: str) -> None:
+        """儲存暫停點，供關機後續跑使用。"""
+        self.save(path)
+
+    def load_resume(self, path: str) -> None:
+        """載入暫停點。"""
+        self.load(path)
+
     def _scalar_to_support(self, scalar: float) -> torch.Tensor:
         """Two-hot encode a scalar into the categorical support distribution."""
         support_size = self.dynamics.support_size

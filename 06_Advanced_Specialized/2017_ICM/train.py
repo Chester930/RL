@@ -10,6 +10,7 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
 
 import random
+import pickle
 import numpy as np
 import torch
 # pyrefly: ignore [missing-import]
@@ -18,6 +19,8 @@ import gymnasium as gym
 from agent import ICMAgent
 from common.utils.logger import Logger
 from common.utils.evaluator import evaluate
+
+RESUME_DIR = "checkpoints/resume"
 
 
 def train(config: dict) -> ICMAgent:
@@ -59,6 +62,23 @@ def train(config: dict) -> ICMAgent:
     ep_return = 0.0
     ep_length = 0
     total_steps = 0
+
+    # 自動偵測暫停點並繼續 (Auto-detect resume checkpoint)
+    resume_meta_path = os.path.join(RESUME_DIR, "train_meta.pkl")
+    resume_ckpt_path = os.path.join(RESUME_DIR, "icm_checkpoint.pt")
+    if os.path.exists(resume_ckpt_path) and os.path.exists(resume_meta_path):
+        agent.load_resume(RESUME_DIR)
+        with open(resume_meta_path, "rb") as f:
+            meta = pickle.load(f)
+        total_steps = meta["total_steps"]
+        ep_return   = meta["ep_return"]
+        ep_length   = meta["ep_length"]
+        best_return = meta["best_return"]
+        obs         = meta["obs"]
+        random.setstate(meta["random_state"])
+        np.random.set_state(meta["np_state"])
+        torch.set_rng_state(meta["torch_state"])
+        print(f"[RESUME] 從步數 {total_steps} 繼續訓練，歷史最佳 {best_return:.1f}")
 
     print(f"正在 {config['env_id']} 環境上進行 ICM+PPO 訓練，總步數為 {config['total_steps']} 步...")
 
@@ -103,6 +123,20 @@ def train(config: dict) -> ICMAgent:
 
         if total_steps // config["save_freq"] > (total_steps - config["rollout_steps"]) // config["save_freq"]:
             agent.save(f"checkpoints/icm_step{total_steps}")
+            agent.save_resume(RESUME_DIR)
+            meta = {
+                "total_steps": total_steps,
+                "ep_return": ep_return,
+                "ep_length": ep_length,
+                "best_return": best_return,
+                "obs": obs,
+                "random_state": random.getstate(),
+                "np_state": np.random.get_state(),
+                "torch_state": torch.get_rng_state(),
+            }
+            with open(os.path.join(RESUME_DIR, "train_meta.pkl"), "wb") as f:
+                pickle.dump(meta, f)
+            print(f"  [RESUME] 暫停點已儲存至 {RESUME_DIR}（步數 {total_steps}）")
 
     logger.close()
     env.close()

@@ -5,6 +5,7 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
 
 import random
+import pickle
 import torch
 import numpy as np
 # pyrefly: ignore [missing-import]
@@ -13,6 +14,8 @@ import gymnasium as gym
 from agent import StateDreamerAgent
 from common.utils.logger import Logger
 from common.utils.evaluator import evaluate
+
+RESUME_DIR = "checkpoints/resume"
 
 
 def train(config: dict) -> StateDreamerAgent:
@@ -48,10 +51,27 @@ def train(config: dict) -> StateDreamerAgent:
     best_eval   = -float("inf")
     os.makedirs("best_checkpoints", exist_ok=True)
 
+    start_episode = 1
+
+    # 自動偵測暫停點並繼續 (Auto-detect resume checkpoint)
+    resume_meta_path = os.path.join(RESUME_DIR, "train_meta.pkl")
+    resume_ckpt_path = os.path.join(RESUME_DIR, "dreamer_state.pt")
+    if os.path.exists(resume_ckpt_path) and os.path.exists(resume_meta_path):
+        agent.load_resume(RESUME_DIR)
+        with open(resume_meta_path, "rb") as f:
+            meta = pickle.load(f)
+        start_episode = meta["episode"] + 1
+        global_step   = meta["global_step"]
+        best_eval     = meta["best_eval"]
+        random.setstate(meta["random_state"])
+        np.random.set_state(meta["np_state"])
+        torch.set_rng_state(meta["torch_state"])
+        print(f"[RESUME] 從集數 {meta['episode']}（step {global_step}）繼續，歷史最佳 {best_eval:.1f}")
+
     print(f"State-based Dreamer 重跑：{config['env_id']}，{config['n_episodes']} 集")
     print(f"  state_dim={state_dim}, action_dim={action_dim}, action_scale={action_scale}")
 
-    for episode in range(1, config["n_episodes"] + 1):
+    for episode in range(start_episode, config["n_episodes"] + 1):
         obs, _ = env.reset()
         agent.reset_state()
         ep_return = ep_length = 0
@@ -92,6 +112,21 @@ def train(config: dict) -> StateDreamerAgent:
                 agent.save("best_checkpoints")
                 print(f"  ** 新最佳 {best_eval:.1f}，已儲存 checkpoint **")
 
+        if episode % config["save_freq"] == 0:
+            agent.save(f"checkpoints/dreamer_ep{episode}")
+            agent.save_resume(RESUME_DIR)
+            meta = {
+                "episode": episode,
+                "global_step": global_step,
+                "best_eval": best_eval,
+                "random_state": random.getstate(),
+                "np_state": np.random.get_state(),
+                "torch_state": torch.get_rng_state(),
+            }
+            with open(os.path.join(RESUME_DIR, "train_meta.pkl"), "wb") as f:
+                pickle.dump(meta, f)
+            print(f"  [RESUME] 暫停點已儲存至 {RESUME_DIR}（集數 {episode}）")
+
     logger.close()
     env.close()
     eval_env.close()
@@ -113,6 +148,7 @@ if __name__ == "__main__":
         "update_every":   20,
         "update_steps":   4,
         "eval_freq":      25,
+        "save_freq":      100,
         "device":         "cuda" if torch.cuda.is_available() else "cpu",
         "seed":           42,
     }

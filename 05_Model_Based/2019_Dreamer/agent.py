@@ -528,3 +528,11 @@ class StateDreamerAgent(BaseAgent):
         self.decoder.load_state_dict(ckpt["decoder"])
         self.actor.load_state_dict(ckpt["actor"])
         self.critic.load_state_dict(ckpt["critic"])
+
+    def save_resume(self, path: str) -> None:
+        """儲存暫停點，供關機後續跑使用。"""
+        self.save(path)
+
+    def load_resume(self, path: str) -> None:
+        """載入暫停點。"""
+        self.load(path)

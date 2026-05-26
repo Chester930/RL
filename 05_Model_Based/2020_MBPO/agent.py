@@ -290,3 +290,41 @@ class MBPOAgent(BaseAgent):
         self.critic.load_state_dict(ckpt["critic"])
         self.critic_target.load_state_dict(ckpt["critic_target"])
         self.total_steps = ckpt["total_steps"]
+
+    def save_resume(self, path: str) -> None:
+        """儲存完整訓練狀態（含 real_buffer），供暫停後續跑使用。"""
+        self._ensure_dir(path)
+        torch.save({
+            "model": self.model.state_dict(),
+            "actor": self.actor.state_dict(),
+            "critic": self.critic.state_dict(),
+            "critic_target": self.critic_target.state_dict(),
+            "total_steps": self.total_steps,
+            "rollout_length": self.rollout_length,
+        }, os.path.join(path, "mbpo_checkpoint.pt"))
+        if len(self.real_buffer) > 0:
+            buf = list(self.real_buffer._buffer)
+            states, actions, rewards, next_states, dones = zip(*buf)
+            np.savez(os.path.join(path, "real_buffer.npz"),
+                     states=np.array(states, dtype=np.float32),
+                     actions=np.array(actions, dtype=np.float32),
+                     rewards=np.array(rewards, dtype=np.float32),
+                     next_states=np.array(next_states, dtype=np.float32),
+                     dones=np.array(dones, dtype=np.float32))
+
+    def load_resume(self, path: str) -> None:
+        """載入完整訓練狀態（含 real_buffer），從暫停點繼續訓練。"""
+        ckpt = torch.load(os.path.join(path, "mbpo_checkpoint.pt"), map_location=self.device)
+        self.model.load_state_dict(ckpt["model"])
+        self.actor.load_state_dict(ckpt["actor"])
+        self.critic.load_state_dict(ckpt["critic"])
+        self.critic_target.load_state_dict(ckpt["critic_target"])
+        self.total_steps = ckpt["total_steps"]
+        self.rollout_length = ckpt.get("rollout_length", 1)
+        buf_path = os.path.join(path, "real_buffer.npz")
+        if os.path.exists(buf_path):
+            data = np.load(buf_path)
+            for s, a, r, ns, d in zip(data["states"], data["actions"],
+                                       data["rewards"], data["next_states"], data["dones"]):
+                self.real_buffer.push(s, a, float(r), ns, float(d))
+            print(f"  已載入 real_buffer：{len(self.real_buffer)} 筆")

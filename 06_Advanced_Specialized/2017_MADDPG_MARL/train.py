@@ -12,11 +12,14 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
 
 import random
+import pickle
 import numpy as np
 import torch
 
 from agent import MADDPGAgent
 from common.utils.logger import Logger
+
+RESUME_DIR = "checkpoints/resume"
 
 
 class SimpleCoopEnv:
@@ -85,9 +88,24 @@ def train(config: dict) -> MADDPGAgent:
 
     logger = Logger(log_dir="runs", run_name="maddpg")
 
+    start_ep = 1
+
+    # 自動偵測暫停點並繼續 (Auto-detect resume checkpoint)
+    resume_meta_path = os.path.join(RESUME_DIR, "train_meta.pkl")
+    resume_ckpt_path = os.path.join(RESUME_DIR, "maddpg_checkpoint.pt")
+    if os.path.exists(resume_ckpt_path) and os.path.exists(resume_meta_path):
+        agent.load_resume(RESUME_DIR)
+        with open(resume_meta_path, "rb") as f:
+            meta = pickle.load(f)
+        start_ep = meta["ep"] + 1
+        random.setstate(meta["random_state"])
+        np.random.set_state(meta["np_state"])
+        torch.set_rng_state(meta["torch_state"])
+        print(f"[RESUME] 從回合 {meta['ep']} 繼續訓練")
+
     print(f"正在為 {n_agents} 個代理人進行 MADDPG 訓練，共 {config['total_episodes']} 回合...")
 
-    for ep in range(1, config["total_episodes"] + 1):
+    for ep in range(start_ep, config["total_episodes"] + 1):
         obs_list = env.reset()
         ep_rewards = [0.0] * n_agents
         done = False
@@ -112,6 +130,16 @@ def train(config: dict) -> MADDPGAgent:
 
         if ep % config["save_freq"] == 0:
             agent.save(f"checkpoints/maddpg_ep{ep}")
+            agent.save_resume(RESUME_DIR)
+            meta = {
+                "ep": ep,
+                "random_state": random.getstate(),
+                "np_state": np.random.get_state(),
+                "torch_state": torch.get_rng_state(),
+            }
+            with open(os.path.join(RESUME_DIR, "train_meta.pkl"), "wb") as f:
+                pickle.dump(meta, f)
+            print(f"  [RESUME] 暫停點已儲存至 {RESUME_DIR}（回合 {ep}）")
 
     logger.close()
     return agent

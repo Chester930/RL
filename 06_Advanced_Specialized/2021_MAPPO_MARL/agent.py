@@ -288,3 +288,11 @@ class MAPPOAgent:
             self.actors[i].load_state_dict(sd)
         for i, sd in enumerate(ckpt["critics"]):
             self.critics[i].load_state_dict(sd)
+
+    def save_resume(self, path: str) -> None:
+        """儲存暫停點，供關機後續跑使用。"""
+        self.save(path)
+
+    def load_resume(self, path: str) -> None:
+        """載入暫停點。"""
+        self.load(path)
