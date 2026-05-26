@@ -56,7 +56,7 @@ C:\Users\666\Desktop\RL\venv\Scripts\python.exe train.py
 
 ---
 
-### R-2：TRPO — 峰值偏低 ⬜
+### R-2：TRPO — 峰值偏低 ✅
 
 **影響**：🟡 中（CartPole 最高 500，TRPO 只達 245.7，學生會問為什麼比 PPO 差這麼多）  
 **重跑成本**：🟡 中（~2 小時，2000 集）  

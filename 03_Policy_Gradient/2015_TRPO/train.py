@@ -90,7 +90,7 @@ def train(config: dict) -> TRPOAgent:
 if __name__ == "__main__":
     config = {
         "env_id": "CartPole-v1",
-        "n_episodes": 1000,
+        "n_episodes": 2000,
         "lr_critic": 1e-3,
         "gamma": 0.99,
         "gae_lambda": 0.97,
