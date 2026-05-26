@@ -42,19 +42,47 @@ CUDA 不可用（CPU 訓練）。
 
 ## 專案結構
 
-- `00_Imitation/2004_BC/` — Behavioral Cloning（程式碼完成，待執行）
-- `02_Value_Based_Deep/` — DQN 系列（DDQN/PER/DuelingDQN 待重跑）
-- `03_Policy_Gradient/` — REINFORCE / PPO / A2C / TRPO
-- `04_Actor_Critic_Continuous/` — DDPG / TD3 / SAC
-- `05_Model_Based/` — DynaQ / Dreamer / MuZero / MBPO
-- `06_Advanced_Specialized/` — C51 / HER / ICM / CQL / IQL / MADDPG / MAPPO
+- `00_Imitation/2004_BC/` — Behavioral Cloning ✅
+- `02_Value_Based_Deep/` — DQN / DDQN / PER / DuelingDQN / A3C / Rainbow ✅
+- `03_Policy_Gradient/` — REINFORCE / PPO / A2C / TRPO ✅
+- `04_Actor_Critic_Continuous/` — DDPG / TD3 / SAC ✅
+- `05_Model_Based/` — DynaQ / WorldModels / Dreamer / MuZero / MBPO ✅
+- `06_Advanced_Specialized/` — C51 / HER / ICM / CQL / IQL / MADDPG / MAPPO ✅
+- `07_Modern_RLHF/` — RLHF / DPO / GRPO ✅
+- `08_Meta_RL/` — ⚠️ 尚未實作（延伸閱讀）
+- `09_Hierarchical_RL/` — ⚠️ 尚未實作（延伸閱讀）
+- `10_Safe_RL/` — ⚠️ 尚未實作（延伸閱讀）
 - `plots/` — 訓練曲線產生指令碼
 - `COURSE_OUTLINE.md` — 機器人 RL 課程大綱（100 分鐘，7 種演算法）
-- `TASK_PLAN.md` — 任務進度追蹤
+- `TASK_PLAN.md` — 任務進度追蹤（詳細）
 
-## 任務進度（2026-05-18）
+## 全專案程式碼慣例（2026-05-26 起）
 
-- [x] 任務三：COURSE_OUTLINE.md 數字修正
-- [ ] 任務一：DDQN/PER/DuelingDQN 重跑（需先清 checkpoints）
-- [ ] 任務二：BC 訓練（`python 00_Imitation/2004_BC/train.py`）
-- [ ] 任務四：產訓練曲線圖（`python plots/generate_plots.py`）
+所有 `train.py` 均已套用以下標準：
+- **隨機種子**：`config["seed"] = 42`，train() 開頭設定 `random/np/torch` 種子
+- **最佳 checkpoint**：eval 超過歷史最佳時自動存 `checkpoints/best/`
+- **NaN 偵測**：`agent.update()` 後檢查 loss，NaN 時立即 raise RuntimeError
+- **崩潰警告**：eval 低於歷史最佳 30% 時印 `[WARNING] eval 崩潰`
+
+## 任務進度（2026-05-26）
+
+### 已完成（全部）
+
+- [x] 任務一：DDQN/PER/DuelingDQN 重跑 ✅（best_checkpoints 存在）
+- [x] 任務二：BC 訓練 ✅（eval=-144.6，分佈偏移測試完整）
+- [x] 任務三：COURSE_OUTLINE.md 數字修正 ✅
+- [x] 任務四：訓練曲線圖 ✅（8 張 PNG）
+- [x] 任務五：Marp 投影片 ✅（course_slides.pdf）
+- [x] 延伸 A：RLHF / DPO / GRPO ✅
+- [x] 延伸 B：HER ✅（FetchReach-v4，400–500 ep 全部 100%）
+- [x] 延伸 C：MADDPG ✅（50k ep，峰值 -2.04）
+- [x] 任務 E：品質不佳演算法重跑 ✅（TRPO / Dreamer / MBPO）
+- [x] 任務 F P1：C51 支撐集修正（0/500）✅ 最終 eval 500.0
+- [x] 任務 F P2：seed / best-ckpt / training_log 特有指標 ✅
+- [x] 任務 F P3 部分：RLHF 合成資料說明 + NaN 偵測 ✅
+
+### 延後（不影響課程）
+
+- [ ] F-9：Meta RL 實作（RL² / MAML / PEARL）
+- [ ] F-10：Hierarchical RL 實作（Options / FeUdal / HIRO）
+- [ ] F-11：Safe RL 實作（CPO / PPO-Lagrangian）
