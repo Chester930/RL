@@ -50,10 +50,12 @@ def train(config: dict) -> MuZeroAgent:
 
         while not done:
             action = agent.select_action(obs)
+            mcts_probs = agent.last_mcts_probs
             next_obs, reward, terminated, truncated, _ = env.step(action)
             done = terminated or truncated
             game_history.append({
                 "obs": obs, "action": action,
+                "mcts_probs": mcts_probs,
                 "reward": reward, "done": done,
             })
             ep_return += reward
@@ -90,7 +92,7 @@ if __name__ == "__main__":
         "n_episodes": 3000,
         "hidden_dim": 64,
         "lr": 1e-3,
-        "num_simulations": 50,
+        "num_simulations": 100,
         "gamma": 0.997,
         "eval_freq": 100,
         "device": "cuda" if torch.cuda.is_available() else "cpu",

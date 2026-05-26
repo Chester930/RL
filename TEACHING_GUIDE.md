@@ -225,7 +225,8 @@ L_CLIP = min(8.44, 5.04) = 5.04（被裁剪）
 **靈魂指標**：線搜尋行為 + KL 約束效果（training_log「線搜尋行為分析」節）
 
 **教學重點**：
-- ep 750 的崩潰（eval=27）→ ep 800 的自動恢復（eval=216）
+- ep 300 開始學習，ep 950 首達 500，後半段穩定（2000 集最終結果）
+- 2026-05-24 舊版的崩潰-恢復循環（ep 750 崩潰→ep 800 恢復）保留在 training_log 供對照
 - 線搜尋全部拒絕時策略凍結，等環境隨機性改變梯度方向
 - 對比 PPO：TRPO 精確但慢，PPO 近似但實用
 
@@ -607,12 +608,12 @@ HER：每集結束後，把軌跡中 achieved_goal 當成「假設的目標」
 |---|---|---|
 | DDQN | 500.0（100K）| `02_Value_Based_Deep/2015_DoubleDQN/best_checkpoints/double_dqn.pt` |
 | PER | 490.1（180K）| `02_Value_Based_Deep/2015_PER/best_checkpoints/per_dqn.pt` |
-| DuelingDQN | 500.0 | `02_Value_Based_Deep/2016_DuelingDQN/checkpoints/dueling_dqn.pt` |
+| DuelingDQN | 500.0（40K）| `02_Value_Based_Deep/2016_DuelingDQN/checkpoints/best/dueling_dqn.pt` |
 | PPO | 500.0（20K）| `03_Policy_Gradient/2017_PPO/checkpoints/ppo.pt` |
 | DDPG | -101.6（100K）| `04_Actor_Critic_Continuous/2015_DDPG/checkpoints/` |
 | TD3 | -119.8（70K）| `04_Actor_Critic_Continuous/2018_TD3/checkpoints/` |
 | SAC | -171.8（100K）| `04_Actor_Critic_Continuous/2018_SAC/checkpoints/` |
-| TRPO | 245.7（350ep）| `03_Policy_Gradient/2015_TRPO/best_checkpoints/trpo.pt` |
+| TRPO | 500.0（950ep）| `03_Policy_Gradient/2015_TRPO/best_checkpoints/trpo.pt` |
 | A2C | 500.0（300K）| `03_Policy_Gradient/2016_A2C/checkpoints/a2c_vecenv_step300000/` |
 | Dreamer | -868.2（475ep）| `05_Model_Based/2019_Dreamer/best_checkpoints/dreamer_state.pt` |
 | C51 | 500.0（80K）| `06_Advanced_Specialized/2017_C51_DistRL/checkpoints/best/` |

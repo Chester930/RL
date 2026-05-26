@@ -186,13 +186,17 @@ class MuZeroAgent(BaseAgent):
         """
         在潛在空間執行 MCTS，根據造訪次數選擇動作。
         評估期間：確定性選擇（取造訪次數最大值）。
-        訓練期間：從造訪次數分佈中取樣（可調整溫度引數）。
+        訓練期間：從造訪次數分佈中取樣。
+
+        MCTS 造訪次數分佈儲存於 self.last_mcts_probs，
+        train.py 可在呼叫後讀取並存入 game_history["mcts_probs"]。
         """
         state_t = torch.FloatTensor(state).unsqueeze(0).to(self.device)
         with torch.no_grad():
             hidden = self.representation(state_t)
 
         action_probs = self.mcts.run(hidden, self.prediction, self.dynamics)
+        self.last_mcts_probs = action_probs  # 供 train.py 讀取
 
         if evaluate:
             return int(np.argmax(action_probs))
@@ -244,8 +248,11 @@ class MuZeroAgent(BaseAgent):
                 idx = pos + k
                 pol_logits, val_logits = self.prediction(s)
 
-                # Policy target: one-hot of stored action
-                if idx < T:
+                # Policy target: MCTS 造訪次數分佈 π_mcts = N(s,a) / Σ N(s,a')
+                if idx < T and "mcts_probs" in game[idx]:
+                    p_tgt = torch.FloatTensor(game[idx]["mcts_probs"]).unsqueeze(0).to(self.device)
+                elif idx < T:
+                    # 向後相容：舊資料無 mcts_probs 時退回 one-hot
                     p_tgt = torch.zeros(1, self.action_dim, device=self.device)
                     p_tgt[0, game[idx]["action"]] = 1.0
                 else:
