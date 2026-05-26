@@ -6,6 +6,7 @@
 """
 
 import os
+import random
 import numpy as np
 # pyrefly: ignore [missing-import]
 import gymnasium as gym
@@ -229,6 +230,10 @@ def _log_milestone_comparison(episode, window, results_per_lam, Q_per_lam, lambd
 # ── 主訓練迴圈 ─────────────────────────────────────────────────────────────────
 
 def train_all(config: dict) -> None:
+    seed = config.get("seed", 42)
+    random.seed(seed)
+    np.random.seed(seed)
+
     lambdas    = config["lambdas"]
     detail_lam = config.get("detail_lambda", 0.9)
 
@@ -502,5 +507,6 @@ if __name__ == "__main__":
         "trace_type":    "replace",
         "lambdas":       [0.0, 0.5, 0.9, 1.0],
         "detail_lambda": 0.9,
+        "seed":          42,
     }
     train_all(config)

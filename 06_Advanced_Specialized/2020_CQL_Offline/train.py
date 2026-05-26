@@ -12,7 +12,9 @@ import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
 
+import random
 import numpy as np
+import torch
 # pyrefly: ignore [missing-import]
 import gymnasium as gym
 
@@ -56,6 +58,13 @@ def generate_random_dataset(env, n_transitions: int = 100_000) -> dict:
 
 
 def train(config: dict) -> CQLAgent:
+    seed = config.get("seed", 42)
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.backends.cudnn.deterministic = True
+
     env = gym.make(config["env_id"])
     eval_env = gym.make(config["env_id"])
 
@@ -86,6 +95,8 @@ def train(config: dict) -> CQLAgent:
 
     agent.load_dataset(dataset)
 
+    best_return = -float("inf")
+
     logger = Logger(log_dir="runs", run_name=f"cql_{config['env_id']}")
 
     print(f"正在 {config['env_id']} 環境上進行 CQL 離線訓練，總步數為 {config['total_steps']} 步...")
@@ -104,6 +115,10 @@ def train(config: dict) -> CQLAgent:
             mean_r, std_r = evaluate(agent, eval_env, n_episodes=10)
             logger.log_scalar("eval/mean_return", mean_r, step)
             print(f"  --> 評估回報: {mean_r:.1f} ± {std_r:.1f}")
+            if mean_r > best_return:
+                best_return = mean_r
+                agent.save("checkpoints/best")
+                print(f"  ★ 新最佳：{mean_r:.1f}，已儲存")
 
         if step % config["save_freq"] == 0:
             agent.save(f"checkpoints/cql_step{step}")
@@ -125,12 +140,13 @@ if __name__ == "__main__":
         "gamma": 0.99,
         "tau": 0.005,
         "batch_size": 256,
-        "cql_alpha": 5.0,
+        "cql_alpha": 1.0,
         "cql_n_actions": 10,
         "cql_lagrange": False,
         "log_freq": 5_000,
         "eval_freq": 25_000,
         "save_freq": 100_000,
         "device": "cuda" if __import__("torch").cuda.is_available() else "cpu",
+        "seed": 42,
     }
     train(config)

@@ -17,6 +17,7 @@ import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
 
+import random
 import numpy as np
 import torch
 # pyrefly: ignore [missing-import]
@@ -50,6 +51,7 @@ CONFIG = {
     "checkpoint_dir":       "checkpoints",
     "log_path":             "training_log.md",
     "device":               "cuda" if torch.cuda.is_available() else "cpu",
+    "seed":                 42,
 }
 
 TEST_STATES = [
@@ -314,6 +316,13 @@ def _build_final_section(agent, config):
 # ──────────────────────────────────────────────
 
 def train(config: dict) -> RainbowAgent:
+    seed = config.get("seed", 42)
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.backends.cudnn.deterministic = True
+
     env = gym.make(config["env_id"])
     eval_env = gym.make(config["env_id"])
 
@@ -336,6 +345,8 @@ def train(config: dict) -> RainbowAgent:
     )
 
     logger = Logger(log_dir="runs", run_name=f"rainbow_{config['env_id']}")
+
+    best_return = -float("inf")
 
     obs, _ = env.reset()
     ep_return = ep_length = episode = 0
@@ -414,6 +425,10 @@ def train(config: dict) -> RainbowAgent:
                 f"recent100={np.mean(recent100):.1f}  "
                 f"β={agent.buffer.beta:.4f}"
             )
+            if eval_mean > best_return:
+                best_return = eval_mean
+                agent.save("checkpoints/best")
+                print(f"  ★ 新最佳：{eval_mean:.1f}，已儲存")
 
             milestone_data[step] = {
                 "eval_mean":     eval_mean,

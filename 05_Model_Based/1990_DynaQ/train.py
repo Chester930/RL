@@ -2,6 +2,7 @@
 
 import sys
 import os
+import random
 import numpy as np
 # pyrefly: ignore [missing-import]
 import gymnasium as gym
@@ -10,6 +11,10 @@ from agent import DynaQAgent
 
 
 def train(config: dict) -> DynaQAgent:
+    seed = config.get("seed", 42)
+    random.seed(seed)
+    np.random.seed(seed)
+
     env = gym.make(config["env_id"])
 
     agent = DynaQAgent(
@@ -57,6 +62,7 @@ if __name__ == "__main__":
         "gamma": 0.95,
         "epsilon": 0.1,
         "log_freq": 1000,
+        "seed": 42,
     }
 
     # 比較不同規劃步數 (Planning steps) 的效果

@@ -13,6 +13,7 @@ import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
 
+import random
 import numpy as np
 import torch
 # pyrefly: ignore [missing-import]
@@ -24,6 +25,15 @@ from common.utils.evaluator import evaluate
 
 
 def train(config: dict) -> A2CAgent:
+    seed = config.get("seed", 42)
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.backends.cudnn.deterministic = True
+
+    best_return = -float("inf")
+
     n_envs  = config["n_envs"]
     n_steps = config["n_steps"]
     env_id  = config["env_id"]
@@ -85,6 +95,10 @@ def train(config: dict) -> A2CAgent:
             mean_r, std_r = evaluate(agent, eval_env)
             logger.log_scalar("eval/mean_return", mean_r, global_step)
             print(f"更新 {update:6d} | 步數 {global_step:8d} | 評估: {mean_r:.1f} ± {std_r:.1f}")
+            if mean_r > best_return:
+                best_return = mean_r
+                agent.save("checkpoints/best")
+                print(f"  ★ 新最佳：{mean_r:.1f}，已儲存")
 
         if update % config["save_freq_updates"] == 0:
             agent.save(f"checkpoints/a2c_vecenv_step{global_step}")
@@ -110,5 +124,6 @@ if __name__ == "__main__":
         "eval_freq_updates": 500,    # 每 500 次更新 ≈ 每 20k 步
         "save_freq_updates": 1_875,  # 每 1875 次更新 ≈ 每 75k 步
         "device": "cuda" if torch.cuda.is_available() else "cpu",
+        "seed": 42,
     }
     train(config)

@@ -4,6 +4,7 @@ import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
 
+import random
 import torch
 import numpy as np
 # pyrefly: ignore [missing-import]
@@ -15,6 +16,15 @@ from common.utils.evaluator import evaluate
 
 
 def train(config: dict) -> PPOAgent:
+    seed = config.get("seed", 42)
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.backends.cudnn.deterministic = True
+
+    best_return = -float("inf")
+
     env = gym.make(config["env_id"])
     eval_env = gym.make(config["env_id"])
 
@@ -82,6 +92,10 @@ def train(config: dict) -> PPOAgent:
             mean_r, std_r = evaluate(agent, eval_env)
             logger.log_scalar("eval/mean_return", mean_r, global_step)
             print(f"  >>> 評估結果 (Eval): {mean_r:.1f} ± {std_r:.1f}")
+            if mean_r > best_return:
+                best_return = mean_r
+                agent.save("checkpoints/best")
+                print(f"  ★ 新最佳：{mean_r:.1f}，已儲存")
 
     logger.close()
     env.close()
@@ -105,5 +119,6 @@ if __name__ == "__main__":
         "log_freq_updates": 10,
         "eval_freq_updates": 50,
         "device": "cuda" if torch.cuda.is_available() else "cpu",
+        "seed": 42,
     }
     train(config)

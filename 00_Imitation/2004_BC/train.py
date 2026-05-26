@@ -73,6 +73,12 @@ def eval_at_angle(agent, env: gym.Env,
 # ──────────────────────────────────────────────────────────────────────
 
 def train(config: dict, skip_collect: bool = False) -> BCAgent:
+    seed = config.get("seed", 42)
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.backends.cudnn.deterministic = True
 
     # ── Step 1: 準備 demo 資料 ────────────────────────────────────────
     demos_path = os.path.join(os.path.dirname(__file__), config["demos_path"])
@@ -198,6 +204,7 @@ if __name__ == "__main__":
         "shift_episodes":  5,
         # 裝置
         "device": "cuda" if torch.cuda.is_available() else "cpu",
+        "seed": 42,
     }
 
     train(config, skip_collect=args.skip_collect)

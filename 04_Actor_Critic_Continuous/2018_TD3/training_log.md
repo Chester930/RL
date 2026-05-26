@@ -48,3 +48,50 @@
 - 最終穩態表現兩者相近（-121 vs -123），在 Pendulum 這種簡單環境差異不顯著
 - TD3 預期的優勢（降低高估偏差、更穩定）在更複雜的連續控制任務（MuJoCo Ant/HalfCheetah）才會明顯體現
 - 兩者的高標準差（±54~117）均來自 Pendulum 初始角度隨機性——策略對某些初始條件完美（~-1），對其他條件次優（~-250）
+
+---
+
+## 演算法特有指標：延遲策略更新效果
+
+> TD3 的三個核心創新：① Twin Critic（減少高估偏差）、② Target Policy Smoothing（平滑 Q-target）、③ Delayed Policy Updates（延遲更新）。
+
+### Actor vs Critic 更新頻率比（policy_delay=2）
+
+```
+每個訓練步驟：
+  - Critic 更新：1 次（每步都更新）
+  - Actor 更新：0.5 次（每 2 步才更新一次）
+  - Target 網路 soft update：與 Actor 同步（每 2 步）
+
+總 200K 步訓練：
+  - Critic 更新次數：200,000 - learning_starts(5,000) = ~195,000 次
+  - Actor 更新次數：~97,500 次
+  - 比率：Actor : Critic = 1 : 2
+```
+
+### 延遲更新的穩定化機制
+
+| 步驟 | 無延遲（DDPG）| 延遲 2 步（TD3）| 差異 |
+|---|---|---|---|
+| Critic 已收斂前 | Actor 跟著不準確的 Q 更新 → 高估累積 | Critic 先做 2 次更新，更穩定 | TD3 給 Critic 更多「先行學習」時間 |
+| Q-target 計算 | `min(Q1, Q2)` 無目標雜訊 | `min(Q1, Q2) + N(0, σ)` clipped | Target smoothing 防止 sharp Q peaks |
+| 策略收斂速度 | 快但易過早確定化 | 稍慢但方向更準確 | 體現為 10K 時 TD3 -566 vs DDPG 類似初期震盪 |
+
+### Pendulum 訓練中的更新頻率效果
+
+```
+步數 0–20K（收斂期）：
+  TD3  Critic 更新 ~15,000 次，Actor 更新 ~7,500 次
+  → 評估回報：-566 → -137（急速改善）
+  Critic 在 Actor 開始「聆聽」前已建立相對準確的 Q 估計
+
+步數 20K–70K（精細化期）：
+  TD3  每 2 步的延遲讓 Actor 動作更新更保守
+  → 評估回報：-137 → -120（緩步改善，峰值 -119.8）
+  DDPG 在此階段容易因 Q 高估出現動作幅度爆炸
+
+步數 70K–200K（穩定期）：
+  兩者 eval 相近（-120 ~ -155 震盪）
+  → Pendulum 太簡單，TD3 優勢未顯現
+  → 在 Ant-v4 / HalfCheetah-v4 等高維任務差距可達 2–5×
+```

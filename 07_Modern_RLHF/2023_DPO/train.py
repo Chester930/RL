@@ -9,6 +9,8 @@ import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
 
+import random
+import numpy as np
 import torch
 from agent import DPOAgent
 from common.utils.logger import Logger
@@ -22,6 +24,13 @@ def make_synthetic_preferences(vocab_size, seq_len, batch_size, device):
 
 
 def train(config: dict) -> DPOAgent:
+    seed = config.get("seed", 42)
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.backends.cudnn.deterministic = True
+
     device = config["device"]
 
     agent = DPOAgent(
@@ -79,5 +88,6 @@ if __name__ == "__main__":
         "log_freq": 100,
         "save_freq": 500,
         "device": "cuda" if __import__("torch").cuda.is_available() else "cpu",
+        "seed": 42,
     }
     train(config)

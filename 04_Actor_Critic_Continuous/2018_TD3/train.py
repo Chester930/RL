@@ -4,6 +4,8 @@ import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
 
+import random
+import numpy as np
 import torch
 # pyrefly: ignore [missing-import]
 import gymnasium as gym
@@ -13,6 +15,15 @@ from common.utils.evaluator import evaluate
 
 
 def train(config: dict) -> TD3Agent:
+    seed = config.get("seed", 42)
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.backends.cudnn.deterministic = True
+
+    best_return = -float("inf")
+
     env = gym.make(config["env_id"])
     eval_env = gym.make(config["env_id"])
 
@@ -61,6 +72,10 @@ def train(config: dict) -> TD3Agent:
             mean_r, std_r = evaluate(agent, eval_env)
             logger.log_scalar("eval/mean_return", mean_r, step)
             print(f"Step {step:8d}  Eval: {mean_r:.1f} ± {std_r:.1f}")
+            if mean_r > best_return:
+                best_return = mean_r
+                agent.save("checkpoints/best")
+                print(f"  ★ 新最佳：{mean_r:.1f}，已儲存")
 
     logger.close()
     env.close()
@@ -80,5 +95,6 @@ if __name__ == "__main__":
         "learning_starts": 5000,
         "log_freq": 1000, "eval_freq": 10_000,
         "device": "cuda" if torch.cuda.is_available() else "cpu",
+        "seed": 42,
     }
     train(config)

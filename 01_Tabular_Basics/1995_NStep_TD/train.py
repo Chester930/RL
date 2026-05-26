@@ -10,6 +10,7 @@
 """
 
 import os
+import random
 import numpy as np
 # pyrefly: ignore [missing-import]
 import gymnasium as gym
@@ -187,6 +188,10 @@ def _log_milestone(episode, window, avg_return, epsilon, Q, n):
 # ── 主程式 ────────────────────────────────────────────────────────────────────
 
 def train(config: dict) -> NStepTDAgent:
+    seed = config.get("seed", 42)
+    random.seed(seed)
+    np.random.seed(seed)
+
     env = gym.make(config["env_id"])
     n   = config["n_steps"]
 
@@ -435,5 +440,6 @@ if __name__ == "__main__":
         "epsilon_end":   0.01,
         "epsilon_decay": 0.9998,
         "log_freq":      5_000,
+        "seed":          42,
     }
     train(config)

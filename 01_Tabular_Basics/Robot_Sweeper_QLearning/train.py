@@ -1,8 +1,12 @@
+import random
 import numpy as np
 from env import SweeperEnv
 from agent import QLearningAgent
 
 def main():
+    random.seed(42)
+    np.random.seed(42)
+
     env = SweeperEnv()
     agent = QLearningAgent(n_states=env.n_states, n_actions=env.n_actions)
     

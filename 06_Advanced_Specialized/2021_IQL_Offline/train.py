@@ -13,7 +13,9 @@ import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
 
+import random
 import numpy as np
+import torch
 # pyrefly: ignore [missing-import]
 import gymnasium as gym
 
@@ -48,6 +50,13 @@ def generate_random_dataset(env, n_transitions: int = 100_000) -> dict:
 
 
 def train(config: dict) -> IQLAgent:
+    seed = config.get("seed", 42)
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.backends.cudnn.deterministic = True
+
     env = gym.make(config["env_id"])
     eval_env = gym.make(config["env_id"])
 
@@ -76,6 +85,8 @@ def train(config: dict) -> IQLAgent:
 
     agent.load_dataset(dataset)
 
+    best_return = -float("inf")
+
     logger = Logger(log_dir="runs", run_name=f"iql_{config['env_id']}")
     print(f"正在 {config['env_id']} 環境上進行 IQL 訓練，總步數為 {config['total_steps']} 步...")
 
@@ -94,6 +105,10 @@ def train(config: dict) -> IQLAgent:
             mean_r, std_r = evaluate(agent, eval_env, n_episodes=10)
             logger.log_scalar("eval/mean_return", mean_r, step)
             print(f"  --> 評估回報: {mean_r:.1f} ± {std_r:.1f}")
+            if mean_r > best_return:
+                best_return = mean_r
+                agent.save("checkpoints/best")
+                print(f"  ★ 新最佳：{mean_r:.1f}，已儲存")
 
         if step % config["save_freq"] == 0:
             agent.save(f"checkpoints/iql_step{step}")
@@ -121,5 +136,6 @@ if __name__ == "__main__":
         "eval_freq": 25_000,
         "save_freq": 100_000,
         "device": "cuda" if __import__("torch").cuda.is_available() else "cpu",
+        "seed": 42,
     }
     train(config)

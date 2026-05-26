@@ -4,6 +4,7 @@ import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
 
+import random
 import json
 import numpy as np
 import torch
@@ -37,6 +38,7 @@ CONFIG = {
     "checkpoint_dir":  "checkpoints",
     "best_checkpoint_dir": "best_checkpoints",
     "device":          "cuda" if torch.cuda.is_available() else "cpu",
+    "seed":            42,
 }
 
 
@@ -287,6 +289,13 @@ def _build_final_section(agent, config):
 # ── 訓練主迴圈 ────────────────────────────────────────────────────────
 
 def train(config):
+    seed = config.get("seed", 42)
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.backends.cudnn.deterministic = True
+
     base_dir = os.path.dirname(os.path.abspath(__file__))
     ckpt_dir = os.path.join(base_dir, config["checkpoint_dir"])
     log_path = os.path.join(base_dir, "training_log.md")

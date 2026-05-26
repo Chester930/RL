@@ -4,6 +4,7 @@ import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
 
+import random
 import torch
 import numpy as np
 # pyrefly: ignore [missing-import]
@@ -15,6 +16,13 @@ from common.utils.evaluator import evaluate
 
 
 def train(config: dict) -> MuZeroAgent:
+    seed = config.get("seed", 42)
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.backends.cudnn.deterministic = True
+
     env = gym.make(config["env_id"])
     eval_env = gym.make(config["env_id"])
 
@@ -82,5 +90,6 @@ if __name__ == "__main__":
         "gamma": 0.997,
         "eval_freq": 100,
         "device": "cuda" if torch.cuda.is_available() else "cpu",
+        "seed": 42,
     }
     train(config)

@@ -270,11 +270,11 @@ C:\Users\666\Desktop\RL\venv\Scripts\python.exe train.py
 | 05 | MuZero | CartPole ~9（骨架架構展示；3000 集重跑確認為結構性限制，非超參數問題）| ✅ |
 | 05 | MBPO | Pendulum 104k 步（關機中止），最佳 eval **-1323.2**（step 80k），較第二次 -1480.6 提升 10.6% | ✅ |
 | 06 | ICM | MountainCar -145.2（成功登頂）| ✅ |
-| 06 | C51 | CartPole 峰值 372.0 | ✅ |
+| 06 | C51 | CartPole 最終 500.0（v3 修正支撐集 0/500，best@80K）| ✅ |
 | 06 | HER | FetchReach-v4 100%（Epoch 160 首達，400–500 全部 100%，完全收斂）| ✅ |
 | 06 | MADDPG | 峰值 -2.04（ep 41800），50k ep 完整完成 | ✅ |
 | 06 | MAPPO | SimpleCoopEnv 平均獎勵 ~-89，500k 步完整完成（2026-05-24）| ✅ |
-| 06 | CQL | HalfCheetah 隨機資料集，峰值 1733（100k 步），200k 步完整完成（2026-05-24）| ✅ |
+| 06 | CQL | HalfCheetah 隨機資料集，峰值 2370.4（50k），最終 2174.9（200k），cql_alpha=1.0 重跑（2026-05-26）| ✅ |
 | 06 | IQL | HalfCheetah 隨機資料集，峰值 530.2（150k），200k 步完整完成（2026-05-24）| ✅ |
 | 07 | RLHF/InstructGPT | SFT 損失 12.24，PPO 平均獎勵 -17.5 | ✅ |
 | 07 | DPO | 準確率 ~50%（合成基線） | ✅ |
@@ -325,7 +325,7 @@ C:\Users\666\Desktop\RL\venv\Scripts\python.exe train.py
 
 ### 🔴 P1：快速修復（每項 < 30 分鐘，影響立即可見）
 
-#### F-1：確認課程大綱的 08/09/10 範圍 ⬜
+#### F-1：確認課程大綱的 08/09/10 範圍 ✅ 已完成（2026-05-25）
 
 **問題**：`08_Meta_RL`、`09_Hierarchical_RL`、`10_Safe_RL` 三個目錄只有 README，無任何程式碼或訓練記錄。若課程大綱提到這些演算法，學生找不到對應實作。
 
@@ -343,7 +343,7 @@ Select-String -Path "C:\Users\666\Desktop\RL\COURSE_OUTLINE.md" -Pattern "Meta|H
 
 ---
 
-#### F-2：C51 支撐集修正 ⬜
+#### F-2：C51 支撐集修正 ✅ 已完成（2026-05-26，v_min=0/v_max=500，最終 eval 500.0，best@80K）
 
 **問題**：`v_min=-10, v_max=10`，但 CartPole 最高回報為 500。所有 >10 的回報被截斷，分佈學習無效。
 
@@ -371,7 +371,7 @@ Select-String -Path "C:\Users\666\Desktop\RL\COURSE_OUTLINE.md" -Pattern "Meta|H
 
 ### 🟡 P2：重要改善（每項 1~4 小時）
 
-#### F-4：全部演算法加隨機種子 ⬜
+#### F-4：全部演算法加隨機種子 ✅ 已完成（2026-05-25，36 個檔案）
 
 **問題**：幾乎所有 train.py 無 `np.random.seed()` + `torch.manual_seed()`，結果不可重現、訓練曲線高方差。
 
@@ -391,7 +391,7 @@ torch.backends.cudnn.deterministic = True
 
 ---
 
-#### F-5：全部演算法加最佳 checkpoint 自動儲存 ⬜
+#### F-5：全部演算法加最佳 checkpoint 自動儲存 ✅ 已完成（2026-05-25，15 個檔案新增，8 個已有機制）
 
 **問題**：大多數只存固定步數 checkpoint。若訓練在峰值後崩潰，無法取回最好的模型（目前只有 DQN 系列有 `best_checkpoints/`）。
 
@@ -409,7 +409,7 @@ if mean_r > best_return:
 
 ---
 
-#### F-6：World Models 接受現況並補充說明 ⬜
+#### F-6：World Models 接受現況並補充說明 ✅ 已完成（2026-05-25）
 
 **問題**：CarRacing 42.5（論文 ~900），差距巨大。但問題是算力（CPU 限制），不是程式碼錯誤。
 
@@ -422,7 +422,7 @@ if mean_r > best_return:
 
 ---
 
-#### F-7：CQL 超參調整 ⬜
+#### F-7：CQL 超參調整 ✅ 已完成（2026-05-26，峰值 2370.4，最終 2174.9，演員損失全程負值）
 
 **問題**：`cql_alpha=5.0` 過度保守，訓練後期 actor_loss 轉正（+15.75），評估回報從峰值 1733 下降到 1189。
 
@@ -440,7 +440,7 @@ if mean_r > best_return:
 
 ---
 
-#### F-8：補充關鍵演算法的缺失訓練指標 ⬜
+#### F-8：補充關鍵演算法的缺失訓練指標 ✅ 已完成（2026-05-25）
 
 **問題**：以下演算法的 training_log 缺少對應演算法特有的診斷指標，降低教學說服力。
 

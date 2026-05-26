@@ -16,6 +16,7 @@ import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
 
+import random
 import numpy as np
 import torch
 # pyrefly: ignore [missing-import]
@@ -41,6 +42,7 @@ CONFIG = {
     "checkpoint_dir":  "checkpoints",
     "log_path":        "training_log.md",
     "device":          "cuda" if torch.cuda.is_available() else "cpu",
+    "seed":            42,
 }
 
 TEST_STATES = [
@@ -289,6 +291,13 @@ def _build_final_section(agent, config):
 # ──────────────────────────────────────────────
 
 def train(config: dict) -> A3CAgent:
+    seed = config.get("seed", 42)
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.backends.cudnn.deterministic = True
+
     env = gym.make(config["env_id"])
     eval_env = gym.make(config["env_id"])
 

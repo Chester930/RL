@@ -9,7 +9,9 @@ import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
 
+import random
 import numpy as np
+import torch
 # pyrefly: ignore [missing-import]
 import gymnasium as gym
 
@@ -19,6 +21,15 @@ from common.utils.evaluator import evaluate
 
 
 def train(config: dict) -> ICMAgent:
+    seed = config.get("seed", 42)
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.backends.cudnn.deterministic = True
+
+    best_return = -float("inf")
+
     env = gym.make(config["env_id"])
     eval_env = gym.make(config["env_id"])
 
@@ -81,6 +92,10 @@ def train(config: dict) -> ICMAgent:
             logger.log_scalar("eval/mean_return", mean_r, total_steps)
             print(f"步數 {total_steps:8d}  評估回報: {mean_r:.1f} ± {std_r:.1f}  "
                   f"內在獎勵: {metrics.get('mean_intr_reward', 0):.4f}")
+            if mean_r > best_return:
+                best_return = mean_r
+                agent.save("checkpoints/best")
+                print(f"  ★ 新最佳：{mean_r:.1f}，已儲存")
 
         if total_steps // config["save_freq"] > (total_steps - config["rollout_steps"]) // config["save_freq"]:
             agent.save(f"checkpoints/icm_step{total_steps}")
@@ -109,5 +124,6 @@ if __name__ == "__main__":
         "eval_freq": 20_000,
         "save_freq": 100_000,
         "device": "cuda" if __import__("torch").cuda.is_available() else "cpu",
+        "seed": 42,
     }
     train(config)

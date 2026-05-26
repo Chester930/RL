@@ -4,6 +4,7 @@ import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
 
+import random
 import torch
 import numpy as np
 from collections import deque
@@ -28,12 +29,22 @@ CONFIG = {
     "milestone_freq": 500,
     "window": 100,
     "device": "cuda" if torch.cuda.is_available() else "cpu",
+    "seed": 42,
 }
 
 THRESHOLD_GOOD = 100   # 第一個值得記錄的里程碑集數（CartPole 理論解決標準為 195，但 REINFORCE 高方差，先記 100）
 
 
 def train(config: dict):
+    seed = config.get("seed", 42)
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.backends.cudnn.deterministic = True
+
+    best_return = -float("inf")
+
     env = gym.make(config["env_id"])
     eval_env = gym.make(config["env_id"])
 
@@ -91,6 +102,10 @@ def train(config: dict):
             logger.log_scalar("eval/mean_return", mean_r, step=episode)
             print(f"Episode {episode:5d}  Eval: {mean_r:.1f} ± {std_r:.1f}  "
                   f"Recent100: {np.mean(recent):.1f}")
+            if mean_r > best_return:
+                best_return = mean_r
+                agent.save("checkpoints/best")
+                print(f"  ★ 新最佳：{mean_r:.1f}，已儲存")
 
         # ── 捕捉第一個「好」集數（回報 >= threshold）────────────────
         if not first_good_logged and ep_return >= THRESHOLD_GOOD:

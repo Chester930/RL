@@ -4,6 +4,7 @@ import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
 
+import random
 import json
 import numpy as np
 import torch
@@ -36,6 +37,7 @@ CONFIG = {
     "good_threshold":  200,
     "checkpoint_dir":  "checkpoints",
     "device":          "cuda" if torch.cuda.is_available() else "cpu",
+    "seed":            42,
 }
 
 
@@ -277,9 +279,18 @@ def _build_final_section(agent, config):
 # ── 訓練主迴圈 ────────────────────────────────────────────────────────
 
 def train(config):
+    seed = config.get("seed", 42)
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.backends.cudnn.deterministic = True
+
     base_dir = os.path.dirname(os.path.abspath(__file__))
     ckpt_dir = os.path.join(base_dir, config["checkpoint_dir"])
     log_path = os.path.join(base_dir, "training_log.md")
+
+    best_return = -float("inf")
 
     env = gym.make(config["env_id"])
     eval_env = gym.make(config["env_id"])
@@ -392,6 +403,10 @@ def train(config):
             recent_mean = float(np.mean(recent_returns)) if recent_returns else 0.0
             print(f"步數 {step:8,}  eval={mean_r:.1f}±{std_r:.1f}  "
                   f"recent{config['window']}={recent_mean:.1f}  ε={eps:.3f}")
+            if mean_r > best_return:
+                best_return = mean_r
+                agent.save(os.path.join(ckpt_dir, "best"))
+                print(f"  ★ 新最佳：{mean_r:.1f}，已儲存")
 
         if step % config["milestone_freq"] == 0:
             mean_r, std_r = evaluate(agent, eval_env, n_episodes=10)

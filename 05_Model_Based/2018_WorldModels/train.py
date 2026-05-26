@@ -13,6 +13,7 @@ import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
 
+import random
 import numpy as np
 import torch
 import torch.optim as optim
@@ -268,6 +269,13 @@ def _random_search_controller(agent: WorldModelsAgent, env, config: dict) -> Non
 # ---------------------------------------------------------------------------
 
 def train(config: dict) -> WorldModelsAgent:
+    seed = config.get("seed", 42)
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.backends.cudnn.deterministic = True
+
     agent = WorldModelsAgent(
         obs_channels=config["obs_channels"],
         img_size=config["img_size"],
@@ -334,5 +342,6 @@ if __name__ == "__main__":
         "eval_rollouts": 2,        # CPU demo：4 → 2
         "max_steps": 300,          # CPU demo：1000 → 300
         "device": "cuda" if __import__("torch").cuda.is_available() else "cpu",
+        "seed": 42,
     }
     train(config)

@@ -11,7 +11,9 @@ import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
 
+import random
 import numpy as np
+import torch
 
 from agent import MADDPGAgent
 from common.utils.logger import Logger
@@ -52,6 +54,13 @@ class SimpleCoopEnv:
 
 
 def train(config: dict) -> MADDPGAgent:
+    seed = config.get("seed", 42)
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.backends.cudnn.deterministic = True
+
     n_agents = config["n_agents"]
     obs_dims = [config["obs_dim"]] * n_agents
     action_dims = [config["action_dim"]] * n_agents
@@ -125,5 +134,6 @@ if __name__ == "__main__":
         "log_freq": 200,
         "save_freq": 2000,
         "device": "cuda" if __import__("torch").cuda.is_available() else "cpu",
+        "seed": 42,
     }
     train(config)

@@ -11,7 +11,9 @@ import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
 
+import random
 import numpy as np
+import torch
 # pyrefly: ignore [missing-import]
 import gymnasium as gym
 import gymnasium_robotics
@@ -39,6 +41,13 @@ def evaluate_goal_env(agent: HERAgent, env, n_episodes: int = 10) -> float:
 
 
 def train(config: dict) -> HERAgent:
+    seed = config.get("seed", 42)
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.backends.cudnn.deterministic = True
+
     env = gym.make(config["env_id"])
     eval_env = gym.make(config["env_id"])
 
@@ -63,6 +72,8 @@ def train(config: dict) -> HERAgent:
         noise_std=config["noise_std"],
         device=config["device"],
     )
+
+    best_rate = 0.0
 
     logger = Logger(log_dir="runs", run_name=f"her_{config['env_id']}")
 
@@ -104,6 +115,10 @@ def train(config: dict) -> HERAgent:
             success_rate = evaluate_goal_env(agent, eval_env, n_episodes=10)
             logger.log_scalar("eval/success_rate", success_rate, epoch)
             print(f"週期 {epoch:5d}  成功率: {success_rate:.2%}")
+            if success_rate > best_rate:
+                best_rate = success_rate
+                agent.save("checkpoints/best")
+                print(f"  ★ 新最佳：{success_rate:.2%}，已儲存")
 
         if epoch % config["save_freq"] == 0:
             agent.save(f"checkpoints/her_epoch{epoch}")
@@ -130,5 +145,6 @@ if __name__ == "__main__":
         "eval_freq": 10,
         "save_freq": 50,
         "device": "cuda" if __import__("torch").cuda.is_available() else "cpu",
+        "seed": 42,
     }
     train(config)

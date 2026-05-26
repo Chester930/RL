@@ -8,6 +8,7 @@
 """
 
 import os
+import random
 import numpy as np
 # pyrefly: ignore [missing-import]
 import gymnasium as gym
@@ -305,6 +306,10 @@ def _evaluate(env, policy, n_episodes):
 # ── 主程式 ────────────────────────────────────────────────────────────────────
 
 def train(config: dict) -> None:
+    seed = config.get("seed", 42)
+    random.seed(seed)
+    np.random.seed(seed)
+
     env = gym.make(config["env_id"])
     P = env.unwrapped.P
     n_states  = env.observation_space.n
@@ -441,5 +446,6 @@ if __name__ == "__main__":
         "gamma":         0.99,
         "theta":         1e-8,
         "eval_episodes": 1000,
+        "seed":          42,
     }
     train(config)
