@@ -150,13 +150,13 @@ if __name__ == "__main__":
         "n_agents": 2,
         "obs_dim": 4,
         "action_dim": 2,
-        "total_episodes": 50_000,
+        "total_episodes": 80_000,    # 50k→80k 給更多收斂空間
         "hidden_dim": 128,
         "lr_actor": 1e-4,
-        "lr_critic": 1e-3,
+        "lr_critic": 5e-4,           # 1e-3→5e-4 降低 Critic 更新幅度
         "gamma": 0.95,
-        "tau": 0.01,
-        "noise_std": 0.2,
+        "tau": 0.005,                # 0.01→0.005 放慢 target network 更新，穩定 Q 估計
+        "noise_std": 0.1,            # 0.2→0.1 後期減少探索噪聲
         "buffer_size": 100_000,
         "batch_size": 256,
         "log_freq": 200,

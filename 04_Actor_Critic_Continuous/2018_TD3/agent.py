@@ -172,3 +172,23 @@ class TD3Agent(BaseAgent):
         self.critic.load_state_dict(ckpt["critic"])
         self.target_actor = copy.deepcopy(self.actor)
         self.target_critic = copy.deepcopy(self.critic)
+
+    def save_resume(self, path: str) -> None:
+        self._ensure_dir(path)
+        torch.save({
+            "actor": self.actor.state_dict(),
+            "critic": self.critic.state_dict(),
+            "target_actor": self.target_actor.state_dict(),
+            "target_critic": self.target_critic.state_dict(),
+            "actor_opt": self.actor_optimizer.state_dict(),
+            "critic_opt": self.critic_optimizer.state_dict(),
+        }, os.path.join(path, "td3_resume.pt"))
+
+    def load_resume(self, path: str) -> None:
+        ckpt = torch.load(os.path.join(path, "td3_resume.pt"), map_location=self.device)
+        self.actor.load_state_dict(ckpt["actor"])
+        self.critic.load_state_dict(ckpt["critic"])
+        self.target_actor.load_state_dict(ckpt["target_actor"])
+        self.target_critic.load_state_dict(ckpt["target_critic"])
+        self.actor_optimizer.load_state_dict(ckpt["actor_opt"])
+        self.critic_optimizer.load_state_dict(ckpt["critic_opt"])

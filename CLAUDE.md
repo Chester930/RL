@@ -49,9 +49,9 @@ CUDA 不可用（CPU 訓練）。
 - `05_Model_Based/` — DynaQ / WorldModels / Dreamer / MuZero / MBPO ✅
 - `06_Advanced_Specialized/` — C51 / HER / ICM / CQL / IQL / MADDPG / MAPPO ✅
 - `07_Modern_RLHF/` — RLHF / DPO / GRPO ✅
-- `08_Meta_RL/` — ⚠️ 尚未實作（延伸閱讀）
-- `09_Hierarchical_RL/` — ⚠️ 尚未實作（延伸閱讀）
-- `10_Safe_RL/` — ⚠️ 尚未實作（延伸閱讀）
+- `08_Meta_RL/` — RL²（GRU + N-Armed Bandit，後半段命中率 0.418 vs 隨機 0.200）✅；MAML / PEARL 僅 README
+- `09_Hierarchical_RL/` — Options（FourRooms + SMDP Q-learning，成功率 84%）✅；FeUdal / HIRO 僅 README
+- `10_Safe_RL/` — PPO-Lagrangian ✅ / CPO ✅（SafePendulum，待訓練）
 - `plots/` — 訓練曲線產生指令碼
 - `COURSE_OUTLINE.md` — 機器人 RL 課程大綱（100 分鐘，7 種演算法）
 - `TASK_PLAN.md` — 任務進度追蹤（詳細）
@@ -64,7 +64,7 @@ CUDA 不可用（CPU 訓練）。
 - **NaN 偵測**：`agent.update()` 後檢查 loss，NaN 時立即 raise RuntimeError
 - **崩潰警告**：eval 低於歷史最佳 30% 時印 `[WARNING] eval 崩潰`
 
-## 任務進度（2026-05-26）
+## 任務進度（2026-05-27）
 
 ### 已完成（全部）
 
@@ -80,9 +80,12 @@ CUDA 不可用（CPU 訓練）。
 - [x] 任務 F P1：C51 支撐集修正（0/500）✅ 最終 eval 500.0
 - [x] 任務 F P2：seed / best-ckpt / training_log 特有指標 ✅
 - [x] 任務 F P3 部分：RLHF 合成資料說明 + NaN 偵測 ✅
+- [x] F-9：RL²（GRU + N-Armed Bandit）訓練完成 ✅（後半段命中率 0.418 vs 隨機 0.200）
+- [x] F-10：Options（FourRooms SMDP Q-learning）訓練完成 ✅（成功率 84%，Flat Q 100%）
+- [x] F-11：PPO-Lagrangian + CPO（SafePendulum）程式碼完成 ✅（smoke test 通過，待長訓練）
 
-### 延後（不影響課程）
+### 待完成（長訓練 + training_log）
 
-- [ ] F-9：Meta RL 實作（RL² / MAML / PEARL）
-- [ ] F-10：Hierarchical RL 實作（Options / FeUdal / HIRO）
-- [ ] F-11：Safe RL 實作（CPO / PPO-Lagrangian）
+- [ ] R-4：MuZero 重跑（程式已修正，待執行 ~4 小時）
+- [ ] PPO-Lagrangian 訓練 + training_log.md（~4–5 小時）
+- [ ] CPO 訓練 + training_log.md（~4–5 小時）

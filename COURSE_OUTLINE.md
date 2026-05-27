@@ -235,3 +235,79 @@ loss = -min(ratio * A,  clip(ratio, 1-ε, 1+ε) * A)
 - **GAIL（Generative Adversarial Imitation Learning）**：BC 的進階版，結合 RL 與模仿
 - **Sim-to-Real Transfer**：模擬訓練 → 真實硬體部署的 gap 問題
 - **Model-Based RL（Dreamer / MuZero）**：用世界模型減少真實資料需求
+
+---
+
+## 進階主題（第二堂課素材）
+
+### Meta RL｜RL²（Learning to Reinforcement Learn）
+
+**核心問題**：「每個新任務都要從頭訓練？能不能讓 agent 學會學習本身？」
+
+**核心思想**：用 RNN（GRU）作為 Policy，隱藏狀態跨 episode 保持不重置。
+訓練目標不是解單一任務，而是讓 GRU 學會「任務識別 + 快速適應」的能力。
+
+```
+GRU 輸入：[prev_action, prev_reward, prev_done]  ← 不含直接觀察！
+GRU 輸出：下一步動作機率
+         GRU hidden state（跨步記憶任務結構）
+
+訓練完後：在全新任務前幾步探索，GRU 自動切換到剝削 → 無需梯度更新
+```
+
+**實驗結果**（5-Armed Bandit）：
+
+| 指標 | 值 |
+|---|---|
+| 後半段命中率（訓練後） | 0.418 |
+| 隨機基線 | 0.200 |
+| 提升倍數 | 2.09× |
+
+**適用場景**：新任務頻繁出現但結構相似（如不同關節、不同負重的機器手臂）
+
+---
+
+### Hierarchical RL｜Options（Temporal Abstraction）
+
+**核心問題**：「如何讓 agent 思考高層目標（去哪個房間），而非每步原始動作？」
+
+**Options 框架**：
+```
+高層策略 Q_hi(s, option)：選擇要執行哪個 option（目標走廊）
+低層策略 Q_lo[o](s, a)  ：在走向 option 目標的過程中，每步怎麼走
+
+Option 終止條件：到達子目標（走廊位置）→ 高層重新選 option
+```
+
+**實驗結果**（FourRooms 13×13 GridWorld）：
+
+| 演算法 | 最終成功率 | 說明 |
+|---|---|---|
+| Options | 84% | 時間抽象，每次選走廊方向 |
+| Flat Q | 100% | 直接學 130 格的 Q-table |
+
+**教學要點**：Options 的優勢在更大環境（數千格）中更顯著；
+此實驗展示語意分解的可行性——「去 A 走廊，再去 B 走廊」比規劃 200 步原始動作更直觀。
+
+---
+
+### Safe RL｜PPO-Lagrangian & CPO
+
+**核心問題**：「真實機器人不能只求最大獎勵——如何確保安全約束不被違反？」
+
+**兩種方法對比**：
+
+| 方法 | 機制 | 特點 |
+|---|---|---|
+| PPO-Lagrangian | 拉格朗日鬆弛（軟約束）| 訓練快，λ 需時間收斂 |
+| CPO | 自然梯度 + 硬約束 | 每步理論保證，計算成本高 |
+
+**Lagrangian 直覺**：
+```
+違規超標 → λ 上升 → 安全懲罰加重 → policy 自動收緊
+違規低於限制 → λ 下降 → 重新擴大獎勵探索空間
+```
+
+**環境**：SafePendulum（|θ̇| > 2.0 rad/s → cost=1，每集限 25 步違規）
+
+**適用場景**：工廠機械臂（避免碰撞）、醫療輔助（避免過度力道）、自駕（交通規則）

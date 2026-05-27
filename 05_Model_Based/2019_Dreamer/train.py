@@ -137,7 +137,7 @@ def train(config: dict) -> StateDreamerAgent:
 if __name__ == "__main__":
     config = {
         "env_id":         "Pendulum-v1",
-        "n_episodes":     500,
+        "n_episodes":     1000,          # 500→1000 給足夠收斂時間
         "embed_dim":      64,
         "deter_dim":      128,
         "stoch_dim":      20,
@@ -145,8 +145,8 @@ if __name__ == "__main__":
         "lambda_":        0.95,
         "imagine_horizon": 15,
         "seed_steps":     1000,
-        "update_every":   20,
-        "update_steps":   4,
+        "update_every":   10,            # 20→10 更頻繁更新，加速學習
+        "update_steps":   8,             # 4→8 每次更多梯度步驟
         "eval_freq":      25,
         "save_freq":      100,
         "device":         "cuda" if torch.cuda.is_available() else "cpu",

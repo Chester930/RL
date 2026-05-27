@@ -194,17 +194,17 @@ if __name__ == "__main__":
         "state_dim": 6,
         "action_dim": 4,
         "episode_len": 50,
-        "total_steps": 500_000,
-        "rollout_steps": 400,  # 每次 PPO 更新前收集 400 步取樣資料
+        "total_steps": 1_000_000,   # 500k→1M 給足夠收斂步數
+        "rollout_steps": 1200,       # 400→1200 每次更新收集約 8 回合（3 agents × 50 steps）
         "hidden_dim": 256,
-        "lr_actor": 5e-4,
-        "lr_critic": 5e-4,
+        "lr_actor": 2e-4,            # 5e-4→2e-4 降低 actor 學習率，穩定訓練
+        "lr_critic": 2e-4,           # 5e-4→2e-4 降低 critic 學習率
         "gamma": 0.99,
         "gae_lambda": 0.95,
         "clip_eps": 0.2,
-        "n_epochs": 10,
+        "n_epochs": 5,               # 10→5 減少重複更新，避免 on-policy 資料過度使用
         "batch_size": 64,
-        "entropy_coef": 0.01,
+        "entropy_coef": 0.05,        # 0.01→0.05 增加探索，避免過早收斂
         "log_freq": 10_000,
         "save_freq": 50_000,
         "device": "cuda" if __import__("torch").cuda.is_available() else "cpu",

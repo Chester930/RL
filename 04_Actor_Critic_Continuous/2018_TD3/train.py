@@ -5,6 +5,7 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
 
 import random
+import pickle
 import numpy as np
 import torch
 # pyrefly: ignore [missing-import]
@@ -12,6 +13,8 @@ import gymnasium as gym
 from agent import TD3Agent
 from common.utils.logger import Logger
 from common.utils.evaluator import evaluate
+
+RESUME_DIR = "checkpoints/resume"
 
 
 def train(config: dict) -> TD3Agent:
@@ -44,8 +47,23 @@ def train(config: dict) -> TD3Agent:
     logger = Logger(log_dir="runs", run_name=f"td3_{config['env_id']}")
     obs, _ = env.reset()
     ep_return = ep_length = 0
+    start_step = 1
 
-    for step in range(1, config["total_steps"] + 1):
+    # 自動偵測暫停點並繼續
+    resume_meta_path = os.path.join(RESUME_DIR, "train_meta.pkl")
+    resume_ckpt_path = os.path.join(RESUME_DIR, "td3_resume.pt")
+    if os.path.exists(resume_ckpt_path) and os.path.exists(resume_meta_path):
+        agent.load_resume(RESUME_DIR)
+        with open(resume_meta_path, "rb") as f:
+            meta = pickle.load(f)
+        start_step = meta["step"] + 1
+        best_return = meta["best_return"]
+        random.setstate(meta["random_state"])
+        np.random.set_state(meta["np_state"])
+        torch.set_rng_state(meta["torch_state"])
+        print(f"[RESUME] 從步數 {meta['step']} 繼續，歷史最佳 {best_return:.1f}")
+
+    for step in range(start_step, config["total_steps"] + 1):
         if step < config["learning_starts"]:
             action = env.action_space.sample()
         else:
@@ -81,6 +99,19 @@ def train(config: dict) -> TD3Agent:
                 agent.save("checkpoints/best")
                 print(f"  ★ 新最佳：{mean_r:.1f}，已儲存")
 
+        if step % config["save_freq"] == 0:
+            agent.save_resume(RESUME_DIR)
+            meta = {
+                "step": step,
+                "best_return": best_return,
+                "random_state": random.getstate(),
+                "np_state": np.random.get_state(),
+                "torch_state": torch.get_rng_state(),
+            }
+            with open(resume_meta_path, "wb") as f:
+                pickle.dump(meta, f)
+            print(f"  [RESUME] 暫停點已儲存（步數 {step}）")
+
     logger.close()
     env.close()
     eval_env.close()
@@ -98,6 +129,7 @@ if __name__ == "__main__":
         "policy_delay": 2, "expl_noise": 0.1,
         "learning_starts": 5000,
         "log_freq": 1000, "eval_freq": 10_000,
+        "save_freq": 20_000,
         "device": "cuda" if torch.cuda.is_available() else "cpu",
         "seed": 42,
     }
