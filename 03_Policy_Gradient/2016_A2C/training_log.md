@@ -188,8 +188,13 @@ c_e 0.02（↑ 2×）：維持探索
 
 ### Checkpoint
 
-| 步數 | 路徑 |
-|---|---|
-| 75,000 | `checkpoints/a2c_vecenv_step75000/` |
-| 225,000 | `checkpoints/a2c_vecenv_step225000/` |
-| 300,000 | `checkpoints/a2c_vecenv_step300000/` |
+| 步數 | 路徑 | eval |
+|---|---|---|
+| 75,000 | `checkpoints/a2c_vecenv_step75000/` | — |
+| 225,000 | `checkpoints/a2c_vecenv_step225000/` | — |
+| 280,000 | `checkpoints/best/a2c.pt` | **500.0 ± 0.0 ★** |
+| 300,000 | `checkpoints/a2c_vecenv_step300000/` | 500.0 ± 0.0 |
+
+> **2026-05-28 重跑確認**：使用相同配置（lr=2e-4, n_steps=10, c_e=0.02）重跑，
+> 280K 步首達 500.0，300K 步最終 500.0 ± 0.0，結果可重現。
+> `checkpoints/best/a2c.pt` 為標準路徑最佳 checkpoint。

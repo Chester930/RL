@@ -1,0 +1,65 @@
+[Logger] TensorBoard logs -> runs\ppo_lagrangian_SafePendulum
+[Logger] Run: tensorboard --logdir runs
+[RESUME] 從更新 100 繼續，λ=0.0000，最佳 -1378.5
+PPO-Lagrangian on SafePendulum | 146 updates × 2048 steps | cost_limit=5.0 | omega_threshold=2.0
+[Ep    10 | Step   206800] Return: -1509.64  Length:   200
+[Ep    20 | Step   208800] Return: -1431.79  Length:   200
+[Ep    30 | Step   210800] Return: -1471.64  Length:   200
+[Ep    40 | Step   212800] Return: -1469.90  Length:   200
+[Ep    50 | Step   214800] Return: -1505.99  Length:   200
+更新  105/146 | 步數  215040 | 獎勵 -1496.3 | 代價/集   7.6 | λ 1.0505 | KL 0.0804
+[Ep    60 | Step   216800] Return: -1424.98  Length:   200
+[Ep    70 | Step   218800] Return: -1302.74  Length:   200
+[Ep    80 | Step   220800] Return: -1540.50  Length:   200
+[Ep    90 | Step   222800] Return: -1527.29  Length:   200
+[Ep   100 | Step   224800] Return: -1546.72  Length:   200
+更新  110/146 | 步數  225280 | 獎勵 -1423.1 | 代價/集   8.0 | λ 1.8509 | KL 1.2222
+[Ep   110 | Step   226800] Return: -1483.87  Length:   200
+[Ep   120 | Step   228800] Return: -1544.27  Length:   200
+[Ep   130 | Step   230800] Return: -1519.14  Length:   200
+[Ep   140 | Step   232800] Return: -1547.35  Length:   200
+[Ep   150 | Step   234800] Return: -1527.83  Length:   200
+更新  115/146 | 步數  235520 | 獎勵 -1422.7 | 代價/集   7.8 | λ 2.2850 | KL 0.6464
+[Ep   160 | Step   236800] Return: -1495.98  Length:   200
+[Ep   170 | Step   238800] Return: -1533.23  Length:   200
+[Ep   180 | Step   240800] Return: -1491.84  Length:   200
+[Ep   190 | Step   242800] Return: -1416.99  Length:   200
+[Ep   200 | Step   244800] Return: -1497.22  Length:   200
+更新  120/146 | 步數  245760 | 獎勵 -1509.5 | 代價/集   8.7 | λ 3.1127 | KL 0.6313
+  >>> Eval | 獎勵 -1448.6 ± 132.7 | 代價/集 9.7 (限 5.0) ✗ 違規 | λ=3.1127
+  [WARNING] eval 崩潰：-1448.6 vs 峰值 -1378.5
+[Ep   210 | Step   246800] Return: -1480.07  Length:   200
+[Ep   220 | Step   248800] Return: -1540.51  Length:   200
+[Ep   230 | Step   250800] Return: -1254.27  Length:   200
+[Ep   240 | Step   252800] Return: -1471.68  Length:   200
+[Ep   250 | Step   254800] Return: -1521.35  Length:   200
+更新  125/146 | 步數  256000 | 獎勵 -1476.4 | 代價/集  11.2 | λ 3.8064 | KL 1.4936
+[Ep   260 | Step   256800] Return: -1553.10  Length:   200
+[Ep   270 | Step   258800] Return: -1507.84  Length:   200
+[Ep   280 | Step   260800] Return: -1521.25  Length:   200
+[Ep   290 | Step   262800] Return: -1379.66  Length:   200
+[Ep   300 | Step   264800] Return: -1411.44  Length:   200
+更新  130/146 | 步數  266240 | 獎勵 -1460.0 | 代價/集   8.7 | λ 4.5527 | KL 1.0583
+[Ep   310 | Step   266800] Return: -1499.97  Length:   200
+[Ep   320 | Step   268800] Return: -1654.54  Length:   200
+[Ep   330 | Step   270800] Return: -1707.84  Length:   200
+[Ep   340 | Step   272800] Return: -1741.20  Length:   200
+[Ep   350 | Step   274800] Return: -1621.75  Length:   200
+更新  135/146 | 步數  276480 | 獎勵 -1628.7 | 代價/集  10.7 | λ 5.2068 | KL 3.3227
+[Ep   360 | Step   276800] Return: -1535.94  Length:   200
+[Ep   370 | Step   278800] Return: -1857.34  Length:   200
+[Ep   380 | Step   280800] Return: -1659.79  Length:   200
+[Ep   390 | Step   282800] Return: -1600.79  Length:   200
+[Ep   400 | Step   284800] Return: -1691.56  Length:   200
+更新  140/146 | 步數  286720 | 獎勵 -1659.4 | 代價/集   5.4 | λ 5.6818 | KL 5.7839
+  >>> Eval | 獎勵 -1817.7 ± 84.2 | 代價/集 8.9 (限 5.0) ✗ 違規 | λ=5.6818
+  [WARNING] eval 崩潰：-1817.7 vs 峰值 -1378.5
+[Ep   410 | Step   286800] Return: -1832.15  Length:   200
+[Ep   420 | Step   288800] Return: -1927.17  Length:   200
+[Ep   430 | Step   290800] Return: -1804.04  Length:   200
+[Ep   440 | Step   292800] Return: -1773.77  Length:   200
+[Ep   450 | Step   294800] Return: -1663.14  Length:   200
+[Ep   460 | Step   296800] Return: -1815.68  Length:   200
+更新  145/146 | 步數  296960 | 獎勵 -1761.2 | 代價/集   5.4 | λ 6.4732 | KL 4.0275
+[Ep   470 | Step   298800] Return: -1748.95  Length:   200
+[Logger] Closed. Total episodes logged: 471

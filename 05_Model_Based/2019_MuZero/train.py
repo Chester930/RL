@@ -36,6 +36,8 @@ def train(config: dict) -> MuZeroAgent:
         lr=config["lr"],
         num_simulations=config["num_simulations"],
         gamma=config["gamma"],
+        td_steps=config.get("td_steps", 5),
+        support_size=config.get("support_size", 501),
         device=config["device"],
     )
 
@@ -122,11 +124,13 @@ def train(config: dict) -> MuZeroAgent:
 if __name__ == "__main__":
     config = {
         "env_id": "CartPole-v1",
-        "n_episodes": 3000,
+        "n_episodes": 5000,        # 3000 → 5000：給網路更多收斂時間
         "hidden_dim": 64,
         "lr": 1e-3,
         "num_simulations": 100,
         "gamma": 0.997,
+        "td_steps": 5,             # 10 → 5：減少 bootstrap 雜訊
+        "support_size": 501,       # [0,500] step=1，對應 CartPole 回報範圍
         "eval_freq": 100,
         "save_freq": 500,
         "device": "cuda" if torch.cuda.is_available() else "cpu",

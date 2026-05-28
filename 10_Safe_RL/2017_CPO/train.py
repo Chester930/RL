@@ -218,10 +218,10 @@ if __name__ == "__main__":
     config = {
         # 環境
         "omega_threshold": 2.0,
-        "cost_limit": 25.0,
+        "cost_limit": 5.0,         # 與 PPO-Lagrangian 一致，隨機策略違規 ~10 步故 λ 必然啟動
 
         # 訓練規模（CPO 每次 update 需計算自然梯度，比 PPO 慢）
-        "total_timesteps": 300_000,
+        "total_timesteps": 600_000,
         "n_steps_per_update": 4096,    # 更多步數讓梯度估計更準確
 
         # CPO 超參數

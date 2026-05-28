@@ -1,0 +1,156 @@
+[Logger] TensorBoard logs -> runs\ddpg_Pendulum-v1
+[Logger] Run: tensorboard --logdir runs
+[Ep    10 | Step     2000] Return: -1438.50  Length:   200
+[Ep    20 | Step     4000] Return: -1769.49  Length:   200
+[Ep    30 | Step     6000] Return: -1484.41  Length:   200
+[Ep    40 | Step     8000] Return:  -131.47  Length:   200
+[Ep    50 | Step    10000] Return:  -265.80  Length:   200
+Step    10000  Eval: -143.2 ± 112.2
+  ★ 新最佳：-143.2，已儲存
+[Ep    60 | Step    12000] Return:    -1.59  Length:   200
+[Ep    70 | Step    14000] Return:  -119.64  Length:   200
+[Ep    80 | Step    16000] Return:  -127.83  Length:   200
+[Ep    90 | Step    18000] Return:  -229.80  Length:   200
+[Ep   100 | Step    20000] Return:  -122.53  Length:   200
+Step    20000  Eval: -143.8 ± 67.8
+  [WARNING] eval 崩潰：-143.8 vs 峰值 -143.2
+  [RESUME] 暫停點已儲存（步數 20000）
+[Ep   110 | Step    22000] Return:  -118.00  Length:   200
+[Ep   120 | Step    24000] Return:    -5.96  Length:   200
+[Ep   130 | Step    26000] Return:  -125.53  Length:   200
+[Ep   140 | Step    28000] Return:  -249.12  Length:   200
+[Ep   150 | Step    30000] Return:  -132.07  Length:   200
+Step    30000  Eval: -126.6 ± 49.6
+  [WARNING] eval 崩潰：-126.6 vs 峰值 -143.2
+  ★ 新最佳：-126.6，已儲存
+[Ep   160 | Step    32000] Return:  -126.57  Length:   200
+[Ep   170 | Step    34000] Return:  -248.95  Length:   200
+[Ep   180 | Step    36000] Return:  -123.58  Length:   200
+[Ep   190 | Step    38000] Return:  -116.56  Length:   200
+[Ep   200 | Step    40000] Return:  -124.14  Length:   200
+Step    40000  Eval: -153.6 ± 86.1
+  [WARNING] eval 崩潰：-153.6 vs 峰值 -126.6
+  [RESUME] 暫停點已儲存（步數 40000）
+[Ep   210 | Step    42000] Return:  -119.61  Length:   200
+[Ep   220 | Step    44000] Return:  -137.03  Length:   200
+[Ep   230 | Step    46000] Return:   -13.89  Length:   200
+[Ep   240 | Step    48000] Return:  -361.67  Length:   200
+[Ep   250 | Step    50000] Return:  -128.42  Length:   200
+Step    50000  Eval: -117.7 ± 99.0
+  [WARNING] eval 崩潰：-117.7 vs 峰值 -126.6
+  ★ 新最佳：-117.7，已儲存
+[Ep   260 | Step    52000] Return:  -117.75  Length:   200
+[Ep   270 | Step    54000] Return:  -121.37  Length:   200
+[Ep   280 | Step    56000] Return:  -247.32  Length:   200
+[Ep   290 | Step    58000] Return:  -240.16  Length:   200
+[Ep   300 | Step    60000] Return:  -234.38  Length:   200
+Step    60000  Eval: -144.9 ± 101.7
+  [WARNING] eval 崩潰：-144.9 vs 峰值 -117.7
+  [RESUME] 暫停點已儲存（步數 60000）
+[Ep   310 | Step    62000] Return:  -125.57  Length:   200
+[Ep   320 | Step    64000] Return:  -356.15  Length:   200
+[Ep   330 | Step    66000] Return:  -137.67  Length:   200
+[Ep   340 | Step    68000] Return:  -221.39  Length:   200
+[Ep   350 | Step    70000] Return:  -129.06  Length:   200
+Step    70000  Eval: -86.1 ± 80.9
+  [WARNING] eval 崩潰：-86.1 vs 峰值 -117.7
+  ★ 新最佳：-86.1，已儲存
+[Ep   360 | Step    72000] Return:  -131.78  Length:   200
+[Ep   370 | Step    74000] Return:  -254.26  Length:   200
+[Ep   380 | Step    76000] Return:  -123.44  Length:   200
+[Ep   390 | Step    78000] Return:  -133.26  Length:   200
+[Ep   400 | Step    80000] Return:  -132.95  Length:   200
+Step    80000  Eval: -132.6 ± 73.8
+  [WARNING] eval 崩潰：-132.6 vs 峰值 -86.1
+  [RESUME] 暫停點已儲存（步數 80000）
+[Ep   410 | Step    82000] Return:  -225.88  Length:   200
+[Ep   420 | Step    84000] Return:  -124.34  Length:   200
+[Ep   430 | Step    86000] Return:  -139.26  Length:   200
+[Ep   440 | Step    88000] Return:  -245.41  Length:   200
+[Ep   450 | Step    90000] Return:  -133.29  Length:   200
+Step    90000  Eval: -170.6 ± 93.1
+  [WARNING] eval 崩潰：-170.6 vs 峰值 -86.1
+[Ep   460 | Step    92000] Return:  -144.03  Length:   200
+[Ep   470 | Step    94000] Return:  -379.48  Length:   200
+[Ep   480 | Step    96000] Return:  -386.72  Length:   200
+[Ep   490 | Step    98000] Return:  -146.89  Length:   200
+[Ep   500 | Step   100000] Return:  -483.38  Length:   200
+Step   100000  Eval: -163.7 ± 90.6
+  [WARNING] eval 崩潰：-163.7 vs 峰值 -86.1
+  [RESUME] 暫停點已儲存（步數 100000）
+[Ep   510 | Step   102000] Return:  -257.98  Length:   200
+[Ep   520 | Step   104000] Return:  -273.08  Length:   200
+[Ep   530 | Step   106000] Return:  -258.10  Length:   200
+[Ep   540 | Step   108000] Return:  -368.86  Length:   200
+[Ep   550 | Step   110000] Return:  -265.40  Length:   200
+Step   110000  Eval: -126.0 ± 78.0
+  [WARNING] eval 崩潰：-126.0 vs 峰值 -86.1
+[Ep   560 | Step   112000] Return:  -267.18  Length:   200
+[Ep   570 | Step   114000] Return:  -388.32  Length:   200
+[Ep   580 | Step   116000] Return:  -270.71  Length:   200
+[Ep   590 | Step   118000] Return:  -134.40  Length:   200
+[Ep   600 | Step   120000] Return:  -382.59  Length:   200
+Step   120000  Eval: -147.5 ± 78.4
+  [WARNING] eval 崩潰：-147.5 vs 峰值 -86.1
+  [RESUME] 暫停點已儲存（步數 120000）
+[Ep   610 | Step   122000] Return:  -382.48  Length:   200
+[Ep   620 | Step   124000] Return:  -262.10  Length:   200
+[Ep   630 | Step   126000] Return:  -247.73  Length:   200
+[Ep   640 | Step   128000] Return:  -261.30  Length:   200
+[Ep   650 | Step   130000] Return:  -229.68  Length:   200
+Step   130000  Eval: -111.7 ± 65.0
+  [WARNING] eval 崩潰：-111.7 vs 峰值 -86.1
+[Ep   660 | Step   132000] Return:  -126.34  Length:   200
+[Ep   670 | Step   134000] Return:  -118.70  Length:   200
+[Ep   680 | Step   136000] Return:  -131.44  Length:   200
+[Ep   690 | Step   138000] Return:  -232.01  Length:   200
+[Ep   700 | Step   140000] Return:  -243.43  Length:   200
+Step   140000  Eval: -154.9 ± 74.3
+  [WARNING] eval 崩潰：-154.9 vs 峰值 -86.1
+  [RESUME] 暫停點已儲存（步數 140000）
+[Ep   710 | Step   142000] Return:  -224.02  Length:   200
+[Ep   720 | Step   144000] Return:    -0.56  Length:   200
+[Ep   730 | Step   146000] Return:  -246.31  Length:   200
+[Ep   740 | Step   148000] Return:  -327.73  Length:   200
+[Ep   750 | Step   150000] Return:  -304.30  Length:   200
+Step   150000  Eval: -132.0 ± 63.5
+  [WARNING] eval 崩潰：-132.0 vs 峰值 -86.1
+[Ep   760 | Step   152000] Return:  -117.57  Length:   200
+[Ep   770 | Step   154000] Return:  -124.25  Length:   200
+[Ep   780 | Step   156000] Return:  -231.93  Length:   200
+[Ep   790 | Step   158000] Return:  -121.07  Length:   200
+[Ep   800 | Step   160000] Return:  -251.26  Length:   200
+Step   160000  Eval: -120.4 ± 73.7
+  [WARNING] eval 崩潰：-120.4 vs 峰值 -86.1
+  [RESUME] 暫停點已儲存（步數 160000）
+[Ep   810 | Step   162000] Return:  -238.14  Length:   200
+[Ep   820 | Step   164000] Return:  -120.40  Length:   200
+[Ep   830 | Step   166000] Return:  -122.26  Length:   200
+[Ep   840 | Step   168000] Return:  -227.26  Length:   200
+[Ep   850 | Step   170000] Return:  -123.41  Length:   200
+Step   170000  Eval: -146.9 ± 69.9
+  [WARNING] eval 崩潰：-146.9 vs 峰值 -86.1
+[Ep   860 | Step   172000] Return:  -227.23  Length:   200
+[Ep   870 | Step   174000] Return:  -341.29  Length:   200
+[Ep   880 | Step   176000] Return:  -128.06  Length:   200
+[Ep   890 | Step   178000] Return:  -224.52  Length:   200
+[Ep   900 | Step   180000] Return:  -124.21  Length:   200
+Step   180000  Eval: -143.4 ± 70.7
+  [WARNING] eval 崩潰：-143.4 vs 峰值 -86.1
+  [RESUME] 暫停點已儲存（步數 180000）
+[Ep   910 | Step   182000] Return:  -115.97  Length:   200
+[Ep   920 | Step   184000] Return:  -126.98  Length:   200
+[Ep   930 | Step   186000] Return:  -120.48  Length:   200
+[Ep   940 | Step   188000] Return:    -0.82  Length:   200
+[Ep   950 | Step   190000] Return:  -117.69  Length:   200
+Step   190000  Eval: -176.5 ± 78.2
+  [WARNING] eval 崩潰：-176.5 vs 峰值 -86.1
+[Ep   960 | Step   192000] Return:  -247.92  Length:   200
+[Ep   970 | Step   194000] Return:  -329.99  Length:   200
+[Ep   980 | Step   196000] Return:  -122.08  Length:   200
+[Ep   990 | Step   198000] Return:  -131.17  Length:   200
+[Ep  1000 | Step   200000] Return:  -237.02  Length:   200
+Step   200000  Eval: -134.7 ± 65.6
+  [WARNING] eval 崩潰：-134.7 vs 峰值 -86.1
+  [RESUME] 暫停點已儲存（步數 200000）
+[Logger] Closed. Total episodes logged: 1000

@@ -260,7 +260,7 @@ if __name__ == "__main__":
     config = {
         # 環境
         "omega_threshold": 2.0,    # |θ̇| > 2.0 rad/s 視為違規
-        "cost_limit": 25.0,        # 每集最多允許 25 步違規（共 200 步）
+        "cost_limit": 5.0,         # 每集最多允許 5 步違規（隨機策略違規 ~10 步，λ 必然啟動）
 
         # 訓練規模
         "total_timesteps": 300_000,
@@ -273,12 +273,13 @@ if __name__ == "__main__":
         "n_minibatch": 32,
         "clip_eps": 0.2,
         "gae_lambda": 0.95,
-        "ent_coef": 0.0,
+        "ent_coef": 0.01,          # 探索熵獎勵，避免策略過早收斂
         "vf_coef": 0.5,
 
         # 拉格朗日超參數
         "lambda_init": 0.0,        # 從 0 開始，由 λ 更新自動增加
         "lr_lambda": 0.05,         # λ 學習率（越大，安全調整越激進）
+        # cost_limit 設為 5：隨機策略約違規 9-13 步，強迫 λ 啟動並展示安全-獎勵折衷
 
         # 日誌 / 存檔
         "log_freq_updates": 5,

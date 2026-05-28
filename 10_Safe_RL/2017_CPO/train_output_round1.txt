@@ -1,0 +1,177 @@
+[Logger] TensorBoard logs -> runs\cpo_SafePendulum
+[Logger] Run: tensorboard --logdir runs
+CPO on SafePendulum | 73 updates × 4096 steps | cost_limit=5.0 | max_kl=0.01
+[Ep    10 | Step     2000] Return: -1208.18  Length:  4096
+[Ep    20 | Step     4000] Return:  -967.10  Length:  4096
+[Ep    30 | Step     6000] Return:  -999.91  Length:  4096
+[Ep    40 | Step     8000] Return:  -976.45  Length:  4096
+[Ep    50 | Step    10000] Return: -1645.85  Length:  4096
+[Ep    60 | Step    12000] Return:  -951.68  Length:  4096
+[Ep    70 | Step    14000] Return:  -623.09  Length:  4096
+[Ep    80 | Step    16000] Return: -1389.16  Length:  4096
+[Ep    90 | Step    18000] Return: -1552.26  Length:  4096
+[Ep   100 | Step    20000] Return: -1401.50  Length:  4096
+更新    5/73 | 步數   20480 | 獎勵 -1309.8 | 代價/集 108.3 | KL 0.0000 | 更新類型 CPO
+[Ep   110 | Step    22000] Return: -1182.57  Length:  4096
+[Ep   120 | Step    24000] Return: -1371.96  Length:  4096
+[Ep   130 | Step    26000] Return: -1547.04  Length:  4096
+[Ep   140 | Step    28000] Return: -1760.11  Length:  4096
+[Ep   150 | Step    30000] Return: -1364.05  Length:  4096
+[Ep   160 | Step    32000] Return: -1616.03  Length:  4096
+[Ep   170 | Step    34000] Return: -1425.29  Length:  4096
+[Ep   180 | Step    36000] Return: -1740.85  Length:  4096
+[Ep   190 | Step    38000] Return: -1257.50  Length:  4096
+[Ep   200 | Step    40000] Return: -1242.89  Length:  4096
+更新   10/73 | 步數   40960 | 獎勵 -1329.0 | 代價/集 108.3 | KL 0.0071 | 更新類型 CPO
+[Ep   210 | Step    42000] Return: -1112.59  Length:  4096
+[Ep   220 | Step    44000] Return: -1521.07  Length:  4096
+[Ep   230 | Step    46000] Return: -1054.32  Length:  4096
+[Ep   240 | Step    48000] Return: -1105.46  Length:  4096
+[Ep   250 | Step    50000] Return: -1245.77  Length:  4096
+[Ep   260 | Step    52000] Return: -1497.32  Length:  4096
+[Ep   270 | Step    54000] Return: -1683.50  Length:  4096
+[Ep   280 | Step    56000] Return: -1730.18  Length:  4096
+[Ep   290 | Step    58000] Return: -1089.14  Length:  4096
+[Ep   300 | Step    60000] Return:  -997.76  Length:  4096
+更新   15/73 | 步數   61440 | 獎勵 -1508.7 | 代價/集  70.2 | KL 0.0000 | 更新類型 CPO
+  >>> Eval | 獎勵 -1463.8 ± 326.2 | 代價/集 68.7 (限 5.0) ✗ 違規
+  ★ 新最佳獎勵：-1463.8，已儲存
+[Ep   310 | Step    62000] Return: -1435.46  Length:  4096
+[Ep   320 | Step    64000] Return: -1428.18  Length:  4096
+[Ep   330 | Step    66000] Return: -1498.94  Length:  4096
+[Ep   340 | Step    68000] Return: -1816.11  Length:  4096
+[Ep   350 | Step    70000] Return: -1275.62  Length:  4096
+[Ep   360 | Step    72000] Return:  -953.69  Length:  4096
+[Ep   370 | Step    74000] Return: -1830.03  Length:  4096
+[Ep   380 | Step    76000] Return: -1068.70  Length:  4096
+[Ep   390 | Step    78000] Return: -1327.69  Length:  4096
+[Ep   400 | Step    80000] Return: -1378.48  Length:  4096
+更新   20/73 | 步數   81920 | 獎勵 -1517.1 | 代價/集  67.3 | KL 0.0101 | 更新類型 CPO
+[Ep   410 | Step    82000] Return: -1819.34  Length:  4096
+[Ep   420 | Step    84000] Return: -1866.49  Length:  4096
+[Ep   430 | Step    86000] Return: -1523.72  Length:  4096
+[Ep   440 | Step    88000] Return: -1307.98  Length:  4096
+[Ep   450 | Step    90000] Return: -1270.84  Length:  4096
+[Ep   460 | Step    92000] Return: -1781.94  Length:  4096
+[Ep   470 | Step    94000] Return: -1552.17  Length:  4096
+[Ep   480 | Step    96000] Return: -1219.61  Length:  4096
+[Ep   490 | Step    98000] Return: -1813.89  Length:  4096
+[Ep   500 | Step   100000] Return: -1737.12  Length:  4096
+[Ep   510 | Step   102000] Return: -1666.12  Length:  4096
+更新   25/73 | 步數  102400 | 獎勵 -1526.4 | 代價/集  64.9 | KL 0.0000 | 更新類型 CPO
+[Ep   520 | Step   104000] Return: -1770.31  Length:  4096
+[Ep   530 | Step   106000] Return: -1812.68  Length:  4096
+[Ep   540 | Step   108000] Return: -1551.60  Length:  4096
+[Ep   550 | Step   110000] Return: -1827.05  Length:  4096
+[Ep   560 | Step   112000] Return: -1430.47  Length:  4096
+[Ep   570 | Step   114000] Return: -1455.93  Length:  4096
+[Ep   580 | Step   116000] Return: -1745.73  Length:  4096
+[Ep   590 | Step   118000] Return: -1615.99  Length:  4096
+[Ep   600 | Step   120000] Return: -1533.89  Length:  4096
+[Ep   610 | Step   122000] Return: -1836.92  Length:  4096
+更新   30/73 | 步數  122880 | 獎勵 -1659.4 | 代價/集  35.9 | KL 0.0000 | 更新類型 CPO
+  >>> Eval | 獎勵 -1673.9 ± 131.4 | 代價/集 41.6 (限 5.0) ✗ 違規
+  [WARNING] eval 崩潰：-1673.9 vs 峰值 -1463.8
+  [RESUME] 暫停點已儲存（更新 30，步數 122880）
+[Ep   620 | Step   124000] Return: -1748.56  Length:  4096
+[Ep   630 | Step   126000] Return: -1859.59  Length:  4096
+[Ep   640 | Step   128000] Return: -1582.34  Length:  4096
+[Ep   650 | Step   130000] Return: -1688.45  Length:  4096
+[Ep   660 | Step   132000] Return: -1248.54  Length:  4096
+[Ep   670 | Step   134000] Return: -1831.30  Length:  4096
+[Ep   680 | Step   136000] Return: -1679.45  Length:  4096
+[Ep   690 | Step   138000] Return: -1530.11  Length:  4096
+[Ep   700 | Step   140000] Return: -1649.28  Length:  4096
+[Ep   710 | Step   142000] Return: -1696.26  Length:  4096
+更新   35/73 | 步數  143360 | 獎勵 -1758.3 | 代價/集  19.3 | KL 0.0038 | 更新類型 CPO
+[Ep   720 | Step   144000] Return: -1748.25  Length:  4096
+[Ep   730 | Step   146000] Return: -1771.24  Length:  4096
+[Ep   740 | Step   148000] Return: -1683.62  Length:  4096
+[Ep   750 | Step   150000] Return: -1716.92  Length:  4096
+[Ep   760 | Step   152000] Return: -1726.66  Length:  4096
+[Ep   770 | Step   154000] Return: -1850.86  Length:  4096
+[Ep   780 | Step   156000] Return: -1898.69  Length:  4096
+[Ep   790 | Step   158000] Return: -1848.46  Length:  4096
+[Ep   800 | Step   160000] Return: -1882.33  Length:  4096
+[Ep   810 | Step   162000] Return: -1794.04  Length:  4096
+更新   40/73 | 步數  163840 | 獎勵 -1786.1 | 代價/集  18.4 | KL 0.0075 | 更新類型 CPO
+[Ep   820 | Step   164000] Return: -1794.23  Length:  4096
+[Ep   830 | Step   166000] Return: -1838.88  Length:  4096
+[Ep   840 | Step   168000] Return: -1798.32  Length:  4096
+[Ep   850 | Step   170000] Return: -1889.64  Length:  4096
+[Ep   860 | Step   172000] Return: -1903.72  Length:  4096
+[Ep   870 | Step   174000] Return: -1820.74  Length:  4096
+[Ep   880 | Step   176000] Return: -1771.39  Length:  4096
+[Ep   890 | Step   178000] Return: -1823.16  Length:  4096
+[Ep   900 | Step   180000] Return: -1737.65  Length:  4096
+[Ep   910 | Step   182000] Return: -1899.04  Length:  4096
+[Ep   920 | Step   184000] Return: -1915.67  Length:  4096
+更新   45/73 | 步數  184320 | 獎勵 -1791.8 | 代價/集  15.8 | KL 0.0051 | 更新類型 CPO
+  >>> Eval | 獎勵 -1868.0 ± 68.5 | 代價/集 10.7 (限 5.0) ✗ 違規
+  [WARNING] eval 崩潰：-1868.0 vs 峰值 -1463.8
+[Ep   930 | Step   186000] Return: -1749.82  Length:  4096
+[Ep   940 | Step   188000] Return: -1595.64  Length:  4096
+[Ep   950 | Step   190000] Return: -1701.53  Length:  4096
+[Ep   960 | Step   192000] Return: -1664.84  Length:  4096
+[Ep   970 | Step   194000] Return: -1845.00  Length:  4096
+[Ep   980 | Step   196000] Return: -1754.68  Length:  4096
+[Ep   990 | Step   198000] Return: -1878.41  Length:  4096
+[Ep  1000 | Step   200000] Return: -1866.83  Length:  4096
+[Ep  1010 | Step   202000] Return: -1765.56  Length:  4096
+[Ep  1020 | Step   204000] Return: -1812.42  Length:  4096
+更新   50/73 | 步數  204800 | 獎勵 -1821.3 | 代價/集  13.0 | KL 0.0058 | 更新類型 CPO
+[Ep  1030 | Step   206000] Return: -1907.66  Length:  4096
+[Ep  1040 | Step   208000] Return: -1787.82  Length:  4096
+[Ep  1050 | Step   210000] Return: -1805.49  Length:  4096
+[Ep  1060 | Step   212000] Return: -1820.10  Length:  4096
+[Ep  1070 | Step   214000] Return: -1895.23  Length:  4096
+[Ep  1080 | Step   216000] Return: -1727.38  Length:  4096
+[Ep  1090 | Step   218000] Return: -1854.65  Length:  4096
+[Ep  1100 | Step   220000] Return: -1867.13  Length:  4096
+[Ep  1110 | Step   222000] Return: -1807.39  Length:  4096
+[Ep  1120 | Step   224000] Return: -1795.42  Length:  4096
+更新   55/73 | 步數  225280 | 獎勵 -1827.7 | 代價/集  12.8 | KL 0.0050 | 更新類型 CPO
+[Ep  1130 | Step   226000] Return: -1821.88  Length:  4096
+[Ep  1140 | Step   228000] Return: -1753.94  Length:  4096
+[Ep  1150 | Step   230000] Return: -1910.18  Length:  4096
+[Ep  1160 | Step   232000] Return: -1913.18  Length:  4096
+[Ep  1170 | Step   234000] Return: -1882.08  Length:  4096
+[Ep  1180 | Step   236000] Return: -1841.68  Length:  4096
+[Ep  1190 | Step   238000] Return: -1851.05  Length:  4096
+[Ep  1200 | Step   240000] Return: -1747.99  Length:  4096
+[Ep  1210 | Step   242000] Return: -1885.71  Length:  4096
+[Ep  1220 | Step   244000] Return: -1918.67  Length:  4096
+更新   60/73 | 步數  245760 | 獎勵 -1806.7 | 代價/集  14.1 | KL 0.0054 | 更新類型 CPO
+  >>> Eval | 獎勵 -1851.0 ± 82.2 | 代價/集 11.0 (限 5.0) ✗ 違規
+  [WARNING] eval 崩潰：-1851.0 vs 峰值 -1463.8
+  [RESUME] 暫停點已儲存（更新 60，步數 245760）
+[Ep  1230 | Step   246000] Return: -1874.52  Length:  4096
+[Ep  1240 | Step   248000] Return: -1621.28  Length:  4096
+[Ep  1250 | Step   250000] Return: -1919.62  Length:  4096
+[Ep  1260 | Step   252000] Return: -1860.99  Length:  4096
+[Ep  1270 | Step   254000] Return: -1615.61  Length:  4096
+[Ep  1280 | Step   256000] Return: -1780.84  Length:  4096
+[Ep  1290 | Step   258000] Return: -1907.86  Length:  4096
+[Ep  1300 | Step   260000] Return: -1680.12  Length:  4096
+[Ep  1310 | Step   262000] Return: -1892.74  Length:  4096
+[Ep  1320 | Step   264000] Return: -1823.51  Length:  4096
+[Ep  1330 | Step   266000] Return: -1856.67  Length:  4096
+更新   65/73 | 步數  266240 | 獎勵 -1792.4 | 代價/集  13.6 | KL 0.0046 | 更新類型 CPO
+[Ep  1340 | Step   268000] Return: -1863.63  Length:  4096
+[Ep  1350 | Step   270000] Return: -1816.86  Length:  4096
+[Ep  1360 | Step   272000] Return: -1701.20  Length:  4096
+[Ep  1370 | Step   274000] Return: -1867.33  Length:  4096
+[Ep  1380 | Step   276000] Return: -1799.56  Length:  4096
+[Ep  1390 | Step   278000] Return: -1907.80  Length:  4096
+[Ep  1400 | Step   280000] Return: -1935.21  Length:  4096
+[Ep  1410 | Step   282000] Return: -1829.04  Length:  4096
+[Ep  1420 | Step   284000] Return: -1867.51  Length:  4096
+[Ep  1430 | Step   286000] Return: -1726.97  Length:  4096
+更新   70/73 | 步數  286720 | 獎勵 -1806.0 | 代價/集  14.9 | KL 0.0050 | 更新類型 CPO
+[Ep  1440 | Step   288000] Return: -1876.84  Length:  4096
+[Ep  1450 | Step   290000] Return: -1748.82  Length:  4096
+[Ep  1460 | Step   292000] Return: -1916.83  Length:  4096
+[Ep  1470 | Step   294000] Return: -1921.94  Length:  4096
+[Ep  1480 | Step   296000] Return: -1866.09  Length:  4096
+[Ep  1490 | Step   298000] Return: -1784.27  Length:  4096
+[Logger] Closed. Total episodes logged: 1495

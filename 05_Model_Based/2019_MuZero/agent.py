@@ -90,8 +90,13 @@ class MCTS:
         root.value_sum = value
         root.visit_count = 1
         root.hidden_state = root_state
+
+        # Dirichlet noise on root priors (standard MuZero exploration trick)
+        dirichlet_noise = np.random.dirichlet([0.3] * self.action_dim)
+        epsilon = 0.25
         for a in range(self.action_dim):
-            root.children[a] = MCTSNode(prior=probs[a].item())
+            noisy_prior = (1 - epsilon) * probs[a].item() + epsilon * dirichlet_noise[a]
+            root.children[a] = MCTSNode(prior=noisy_prior)
 
         for _ in range(self.num_simulations):
             node = root
@@ -156,7 +161,7 @@ class MuZeroAgent(BaseAgent):
         weight_decay: float = 1e-4,
         num_simulations: int = 50,
         unroll_steps: int = 5,
-        td_steps: int = 10,
+        td_steps: int = 5,
         gamma: float = 0.997,
         support_size: int = 601,
         device: str = "cpu",
@@ -333,7 +338,8 @@ class MuZeroAgent(BaseAgent):
     def _scalar_to_support(self, scalar: float) -> torch.Tensor:
         """Two-hot encode a scalar into the categorical support distribution."""
         support_size = self.dynamics.support_size
-        v_min, v_max = -300.0, 300.0
+        # CartPole returns are in [0, 500]; reward per step = 1.0
+        v_min, v_max = 0.0, 500.0
         scalar = max(v_min, min(v_max, float(scalar)))
         step = (v_max - v_min) / (support_size - 1)  # = 1.0 for 601 atoms
         lower_idx = min(int((scalar - v_min) / step), support_size - 2)
