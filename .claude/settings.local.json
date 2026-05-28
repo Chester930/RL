@@ -187,7 +187,9 @@
       "Bash(Get-ChildItem \"C:\\\\Users\\\\666\\\\Desktop\\\\RL\\\\03_Policy_Gradient\\\\2017_PPO\")",
       "Bash(C:Users666DesktopRLvenvScriptspython.exe -c ' *)",
       "Bash(Remove-Item -Recurse -Force checkpoints -ErrorAction SilentlyContinue)",
-      "PowerShell(Set-Location \"C:\\\\Users\\\\666\\\\Desktop\\\\RL\"; Start-Process pwsh -ArgumentList \"-NoExit\", \"-File\", \".\\\\run_overnight.ps1\" -WindowStyle Normal; Write-Host \"已啟動獨立視窗執行 run_overnight.ps1\")"
+      "PowerShell(Set-Location \"C:\\\\Users\\\\666\\\\Desktop\\\\RL\"; Start-Process pwsh -ArgumentList \"-NoExit\", \"-File\", \".\\\\run_overnight.ps1\" -WindowStyle Normal; Write-Host \"已啟動獨立視窗執行 run_overnight.ps1\")",
+      "WebSearch",
+      "Bash(git commit -m 'docs: add ROBOT_RL_GUIDE.md - robot RL methods from BC to VLA/PI0/RLT *)"
     ]
   }
 }
